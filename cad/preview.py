@@ -374,21 +374,6 @@ def plant_parts(r_out: float = 74.0, soil_top: float = -30.0, leaves: int = 9,
     return out
 
 
-def hardware_parts():
-    """The real electronics, from the fit check's own boxes."""
-    from check_fit import HARDWARE
-    out = []
-    for name, (x0, x1, y0, y1, z0, z1, _) in HARDWARE.items():
-        colour = (C_BOARD if name.startswith("esp32") else
-                  C_METAL if name.startswith("usb") else
-                  C_CELL if name.startswith("lipo") else
-                  (28, 58, 116) if name.startswith("tp") else (146, 92, 158))
-        m = trimesh.creation.box(extents=(x1 - x0, y1 - y0, z1 - z0))
-        m.apply_translation(((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2))
-        out.append((m, colour))
-    return out
-
-
 # ---------------------------------------------------------------------------
 # labels and compositing
 # ---------------------------------------------------------------------------

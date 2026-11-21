@@ -3,7 +3,8 @@ The X=0 cutaway drawing: printed parts, the pot wall, the soil line and the real
 hardware the plane cuts through. The photographed-looking views are in
 cad/preview.py; this file is the technical drawing.
 
-  docs/diagrams/section.png
+  docs/diagrams/section.png     the X=0 cutaway
+  docs/diagrams/bay_layout.png   plan view of the open bay, lid off
 
     .venv-cad/bin/python cad/render.py
 """
@@ -120,7 +121,8 @@ def pot_meshes(rim_gap: float, depth: float = 95.0, height: float = 190.0):
 def hardware_meshes():
     out = []
     color = {"esp32": COLORS["board"], "tp4056": COLORS["charger"],
-             "lipo": COLORS["cell"], "usb": (90, 96, 110),
+             "ht7333": (94, 122, 62), "lipo": COLORS["cell"],
+             "usb": (90, 96, 110), "sensor-conn": (120, 96, 140),
              "sensor": COLORS["sensor"]}
     for name, (x0, x1, y0, y1, z0, z1, _) in HARDWARE.items():
         key = next(k for k in color if name.startswith(k))
@@ -185,8 +187,9 @@ def draw_section(rim_gap: float, path: Path):
     ax.axhline(-34, color="#7a6048", lw=1.0, ls=":", zorder=0.6)
 
     labels = {"esp32-c3-supermini": "SuperMini", "lipo-103450": "cell",
-              "tp4056": "TP4056", "usb-pigtail": "USB-C",
-              "sensor-pcb": "probe PCB", "sensor-parts": ""}
+              "tp4056": "TP4056", "ht7333": "LDO", "usb-pigtail": "USB-C",
+              "sensor-pcb": "probe PCB", "sensor-smd": "",
+              "sensor-connector": ""}
     for name, (x0, x1, y0, y1, z0, z1, _) in HARDWARE.items():
         if not (x0 <= 0.0 <= x1):
             continue          # this part is not on the X=0 plane
@@ -197,17 +200,17 @@ def draw_section(rim_gap: float, path: Path):
             ax.annotate("probe PCB + parts", (y0, (z0 + z1) / 2),
                         xytext=(-64, (z0 + z1) / 2), fontsize=8, va="center",
                         arrowprops=dict(arrowstyle="-", lw=0.6, color="#444"))
-        elif labels[name]:
+        elif labels.get(name):
             ax.annotate(labels[name], ((y0 + y1) / 2, (z0 + z1) / 2),
                         fontsize=7.5, ha="center", va="center", color="#123",
                         zorder=4)
 
-    ax.annotate("pot wall", (0, -120), xytext=(24, -120), fontsize=8,
-                va="center", arrowprops=dict(arrowstyle="-", lw=0.6,
-                                             color="#444"))
+    ax.annotate("pot wall", (0, -120), xytext=(-9, -126), fontsize=8,
+                va="center", ha="right",
+                arrowprops=dict(arrowstyle="-", lw=0.6, color="#444"))
     ax.annotate("rim top (Z=0)", (0, 0), xytext=(24, 12), fontsize=8,
                 arrowprops=dict(arrowstyle="-", lw=0.6, color="#444"))
-    ax.annotate("soil line", (-44, -34), xytext=(24, -48), fontsize=8,
+    ax.annotate("soil line", (-44, -34), xytext=(-68, -30), fontsize=8,
                 arrowprops=dict(arrowstyle="-", lw=0.6, color="#7a6048"))
     ax.annotate("wire groove", (-12.0, -14.0), xytext=(18, -6), fontsize=8,
                 arrowprops=dict(arrowstyle="-", lw=0.6, color="#444"))
@@ -226,10 +229,115 @@ def draw_section(rim_gap: float, path: Path):
     print(f"wrote {path.relative_to(ROOT)}")
 
 
+def draw_layout(rim_gap: float, path: Path):
+    """Plan view into the open bay: what goes where.
+
+    The bay is 27 mm deep, so a flat projection would show the cell on top of the
+    boards. Parts nearer the lid are solid; parts deeper in the bay are hatched,
+    and every label carries its Y band.
+    """
+    fig, ax = plt.subplots(figsize=(9.8, 7.2))
+
+    half, wall = ss.BAY_W / 2, ss.WALL_SIDE
+    z0, z1 = ss.BAY_BOT + ss.WALL_BOT, ss.BAY_TOP - ss.TOP_WALL
+    ax.add_patch(plt.Rectangle((-half, ss.BAY_BOT), ss.BAY_W, ss.BAY_H,
+                               facecolor="#e4e0d6", edgecolor="#8b867c", lw=1.0))
+    ax.add_patch(plt.Rectangle((-half + wall, z0), 2 * (half - wall), z1 - z0,
+                               facecolor="#fbfaf7", edgecolor="#6f6a60", lw=1.0))
+
+    # lid screw bosses first, so they never cover a part
+    for sx in (-ss.BOSS_X, ss.BOSS_X):
+        ax.add_patch(plt.Rectangle((sx - 5, ss.LID_BOT_SCREW_Z - 5), 10, 10,
+                                   facecolor="none", edgecolor="#a8341f",
+                                   lw=1.0, ls=(0, (3, 2)), zorder=2))
+        ax.plot([sx], [ss.LID_TOP_SCREW_Z], marker="+", ms=9, mew=1.4,
+                color="#a8341f", zorder=2)
+
+    # deep layer: behind the boards
+    deep = {"lipo": ("#b9b3a6", "//"), "usb": ("#c9c6c0", "xx")}
+    for name, (px0, px1, _, _, pz0, pz1, _) in HARDWARE.items():
+        key = next((k for k in deep if name.startswith(k)), None)
+        if key is None:
+            continue
+        fill, hatch = deep[key]
+        ax.add_patch(plt.Rectangle((px0, pz0), px1 - px0, pz1 - pz0,
+                                   facecolor=fill, edgecolor="#4a4a52", lw=1.0,
+                                   hatch=hatch, alpha=0.85, zorder=3))
+
+    fill_deep_txt = "#2b2b33"
+    ax.text(-0.5, -26, "103450 cell\n35 x 52\nY 17-28", color=fill_deep_txt,
+            fontsize=9, ha="center", va="center", zorder=6, linespacing=1.35,
+            bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="none", alpha=0.75))
+
+    # near layer: taped to the lid
+    near = {"esp32": ((38, 92, 66), "SuperMini\n22.5 x 18\nY 3-8"),
+            "tp4056": ((30, 60, 120), "TP4056\n29 x 17\nY 3-7"),
+            "ht7333": ((93, 122, 62), "")}
+    for name, (px0, px1, _, _, pz0, pz1, _) in HARDWARE.items():
+        key = next((k for k in near if name.startswith(k)), None)
+        if key is None:
+            continue
+        rgb, text = near[key]
+        ax.add_patch(plt.Rectangle((px0, pz0), px1 - px0, pz1 - pz0,
+                                   facecolor=[c / 255 for c in rgb],
+                                   edgecolor="#20242a", lw=0.9, zorder=4))
+        if text:
+            ax.text((px0 + px1) / 2, (pz0 + pz1) / 2, text, color="white",
+                    fontsize=8, ha="center", va="center", zorder=6,
+                    linespacing=1.35)
+
+    ldo = HARDWARE["ht7333"]
+    ax.annotate("HT7333 LDO\nY 3-7", ((ldo[0] + ldo[1]) / 2, (ldo[4] + ldo[5]) / 2),
+                xytext=(-16, -12), fontsize=7.5, color="#2d4a18", zorder=7,
+                bbox=dict(boxstyle="round,pad=0.22", fc="white", ec="none", alpha=0.85),
+                arrowprops=dict(arrowstyle="-", lw=0.8, color="#3d5a20"))
+
+    r = ss.CHARGE_PORT_D / 2
+    ax.add_patch(plt.Circle((ss.CHARGE_PORT_X, ss.CHARGE_PORT_Z), r, fill=False,
+                            edgecolor="#33404a", lw=1.3, ls=(0, (2, 2)), zorder=5))
+    ax.annotate("M16 charge port\nthrough the back wall",
+                (ss.CHARGE_PORT_X + r * 0.72, ss.CHARGE_PORT_Z),
+                xytext=(ss.CHARGE_PORT_X, ss.CHARGE_PORT_Z - 13), fontsize=7.5,
+                color="#33404a", zorder=7, ha="center",
+                bbox=dict(boxstyle="round,pad=0.22", fc="white", ec="none", alpha=0.85),
+                arrowprops=dict(arrowstyle="-", lw=0.7, color="#33404a"))
+
+    ax.annotate("probe cable notch (X 0)", (0.0, z1), xytext=(16, 5), fontsize=7.5,
+                color="#444", zorder=7,
+                bbox=dict(boxstyle="round,pad=0.22", fc="white", ec="none", alpha=0.85),
+                arrowprops=dict(arrowstyle="-", lw=0.6, color="#444"))
+    ax.annotate("lid screw boss x2\n(+ = top wall screws)",
+                (-ss.BOSS_X + 5, ss.LID_BOT_SCREW_Z - 5),
+                xytext=(-half - 7.5, ss.BAY_BOT - 4.0), fontsize=7.5,
+                color="#8d2b19", zorder=7,
+                bbox=dict(boxstyle="round,pad=0.22", fc="white", ec="none", alpha=0.85),
+                arrowprops=dict(arrowstyle="-", lw=0.6, color="#a8341f"))
+
+    ax.text(0, z0 - 8.0,
+            "solid = taped to the lid    hatched = deeper in the bay (cell, pigtail)",
+            fontsize=8, ha="center", va="top", color="#4d4a44")
+
+    ax.set_xlim(-half - 10, half + 6)
+    ax.set_ylim(ss.BAY_BOT - 14, ss.BAY_TOP + 2.5)
+    ax.set_aspect("equal")
+    ax.set_xlabel("X (mm)")
+    ax.set_ylabel("Z (mm)")
+    ax.grid(alpha=0.15, lw=0.5)
+    ax.set_title(f"Bay layout with the lid off (rim gap {rim_gap:g} mm): "
+                 f"{2 * (half - wall):.0f} x {z1 - z0:.0f} mm against the lid\n"
+                 "the lid carries the boards, so this is its inner face",
+                 fontsize=10)
+    fig.tight_layout()
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+    print(f"wrote {path.relative_to(ROOT)}")
+
+
 def main():
     """The cutaway drawing only: cad/preview.py owns the photographic views."""
     rim_gap = float(sys.argv[1]) if len(sys.argv) > 1 else ss.RIM_GAP
     draw_section(rim_gap, OUT / "section.png")
+    draw_layout(rim_gap, OUT / "bay_layout.png")
 
 
 if __name__ == "__main__":

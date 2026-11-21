@@ -1,7 +1,8 @@
 # Assembly
 
-Three printed parts, two gaskets, four screws. About 45 minutes of assembly once
-the print is off the bed, most of it waiting for silicone to cure.
+Five printed parts — three structural, two gaskets — and four screws. About 45
+minutes of assembly once the print is off the bed, most of it waiting for silicone
+to cure.
 
 ## Print settings
 
@@ -64,6 +65,28 @@ cuts the thread and burnishes the hole; doing it with the gasket in place tends 
 skew the screw and strip the pilot. If a pilot strips, a drop of CA glue and three
 minutes will hold it for another cycle.
 
+## What goes where
+
+![The open bay, lid off: where each board sits](diagrams/bay_layout.png)
+
+Everything but the cell and the pigtail is taped to the **lid's inner face**, so
+opening the case lifts the whole electronics stack out in one piece and nothing has
+to be unscrewed to get at it. The bay is 27 mm deep, which is why the cell and the
+pigtail — hatched in the drawing — sit behind the boards rather than under them.
+
+| Part | Where (X, Z) | Depth (Y) | Notes |
+|---|---|---|---|
+| SuperMini | X −38…−20, Z −33…−11 | 3–8 | left of the bay, antenna end up, 3.0 mm clear of the wall |
+| TP4056 | X 2…31, Z −21…−4 | 3–7 | right of centre; its USB-C faces the pigtail's lead, 0.8 mm clear of the screw boss |
+| HT7333 | X −10…−5.5, Z −20…−18.5 | 3–7 | in between the two, 1.5 mm thick, flat to the lid |
+| 103450 cell | X −17.5…17.5, Z −52…0 | 17–28 | standing on the floor against the back wall, ~10 mm behind the boards |
+| M16 pigtail | X −40…−20, Z −50…−30 | 16–30 | over the port in the back wall, nut inside |
+| probe PCB | in the sleeve, Z −134…−36 | — | sensing face against the 1.6 mm front wall |
+
+Those are the same numbers `cad/check_fit.py` verifies, and the same boxes the
+drawings are made from, so a part that grows shows up here and in the check at the
+same time.
+
 ## Step by step
 
 1. **Test the electronics outside the case.** Flash the firmware, confirm Wi-Fi and
@@ -73,19 +96,27 @@ minutes will hold it for another cycle.
    out the probe cavity; a stray string of PETG will stop the probe seating.
 3. **Dry-fit the probe.** Slide the V1.2 board into the sleeve from the bottom,
    sensing face towards the 1.6 mm front wall. It should go in with light thumb
-   pressure and stop against the collar at Z ≈ −30 mm. If it binds, the cavity
+   pressure and stop against the collar at Z ≈ −30 mm. **Check the connector first:**
+   the sleeve leaves 6.6 mm above the PCB before the cap's inner face, so a JST-PH
+   socket (5.6 mm) is fine and a straight 2.54 mm header (~8.5 mm) is not — desolder
+   it or fit a right-angle one ([FIT.md](FIT.md)). If the board binds, the cavity
    floor has a blob — file it, do not force the board, the electrode is a thin
-   copper pour and it will crease.
+   copper pour and it will crease. The [X=0 cutaway](diagrams/section.png) shows
+   how tight that stack is.
 4. **Seat the C3 in the bay.** It goes on the lid, not the body: three 3 mm foam
    tape pads under its two long edges (clear of the USB-C shell), then press it
-   onto the lid's inner face with the antenna away from the battery. Taped to the
+   onto the lid's inner face, antenna end up (towards the bay's top edge) and away
+   from the cell and the metal pigtail. Taped to the
    lid means the whole stack lifts out when you open the case. The 3 mm tape
    thickness is what the fit check assumes, so keep it under 3.5 mm.
-5. **Battery.** Foam tape on the back of the pouch, then press it into the bay
-   floor with the leads towards the charge board. The cell must not sit on the
-   TP4056 — that board gets warm while charging.
-6. **Charge board and LDO.** Same 3 mm foam tape, on the lid to the right of the
-   C3 — **not** at the bottom-left corner, which is a lid screw boss. The pigtail's
+5. **Battery.** Foam tape on the *back* of the pouch, then stand it on the bay
+   floor against the back wall with its leads out of the top, towards the charge
+   board. It is 52 mm tall in a 53 mm bay, so it will touch both ends — that is
+   the fit, not a mistake. It sits ~10 mm behind the boards, which is deliberate:
+   the TP4056 gets warm while charging and the pouch should not be against it.
+6. **Charge board and LDO.** Same 3 mm foam tape. The LDO sits between the C3 and
+   the charger (X −10…−5.5); the charger goes to the right of centre, Z −21…−4 —
+   **not** at the bottom-left corner, which is a lid screw boss. The pigtail's
    lead crosses the bay to reach the charger's USB-C; plug it in *before* you tape
    the board down (the connector is easier to seat with the board loose) and dress
    the lead flat against the lid so the lid still closes.

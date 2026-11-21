@@ -60,6 +60,12 @@ counterbalances the probe.
 
 ![Cutaway through X=0: printed parts, pot wall, soil and the hardware](docs/diagrams/section.png)
 
+![Bay layout with the lid off: the SuperMini, TP4056, LDO, cell and pigtail, with the depths they sit at](docs/diagrams/bay_layout.png)
+
+*The lid carries the boards, so the drawing above is its inner face: solid parts are
+taped to it, hatched parts sit deeper in the 27 mm bay. Those are the same boxes
+`cad/check_fit.py` checks.*
+
 *Rendered from the exported STLs by `cad/preview.py` and `cad/render.py`, with the
 real hardware boxes from `cad/check_fit.py`; no photographs, no manual retouching.*
 
@@ -71,11 +77,12 @@ cad/            parametric build123d model, fit checks, renderers
   check_fit.py    watertightness, packing, clearance, wire-route checks
   orient.py       picks each part’s print orientation, writes stl/print/
   preview.py      photoreal previews: hero, exploded, mounted, room, views, plate
-  render.py       the X=0 cutaway drawing
+  render.py       the X=0 cutaway and the bay layout drawing
 stl/            STLs in assembly orientation + manifest_rim<N>.json
   print/          the same parts pre-rotated for printing + manifest.json
 firmware/       soilsitter.yaml, secrets.yaml.example
-docs/           BOM, wiring, assembly, calibration, usage, integration
+docs/           BOM, FIT (measured sizes), wiring, assembly, calibration,
+                usage, integration
 tools/          build.sh, validate.sh
 ```
 

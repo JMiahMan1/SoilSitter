@@ -1,6 +1,39 @@
 # Changelog
 
-## 1.0.3 — 2026-11-20
+## 1.0.4 — 2026-11-20
+
+**Diagrams and assembly instructions brought in line with the measured hardware.**
+
+The photographic renders were never wrong — they draw only the five printed parts —
+but the technical drawing was, and nothing showed the inside of the bay, which is
+what half of ASSEMBLY talks about.
+
+- **New `docs/diagrams/bay_layout.png`**: plan view into the open bay with the lid
+  off, showing where the SuperMini, TP4056, LDO, 103450 cell and M16 pigtail go,
+  each labelled with its X/Z band *and* its Y depth. Solid parts are taped to the
+  lid; hatched parts sit deeper. It is generated from the same `HARDWARE` boxes
+  `check_fit.py` verifies, so the drawing cannot drift from the check.
+- **`cad/render.py` would have crashed** on the new hardware names: the colour map
+  used `next(...)` over name prefixes and had no entry for `ht7333`, and the label
+  dict was indexed with `labels[name]` for names that no longer existed. It now
+  uses explicit maps with lookups that tolerate new parts.
+- `section.png` regenerated with the corrected boxes; the two leader lines that
+  crossed the whole figure (soil line, pot wall) were moved out of the way.
+- **`preview.py` had a dead `hardware_parts()`** that no scene called — 17 lines of
+  a second, silently-drifting source of part sizes. Removed; `render.py` is the one
+  place that draws hardware.
+- **ASSEMBLY.md** now opens its build steps with a "What goes where" table (X, Z,
+  depth, notes per part) that matches the drawing, and the steps were corrected:
+  the cell stands on the floor against the **back wall** with its leads out of the
+  top (it was "press it into the bay floor"), the LDO has a stated home between the
+  two boards, the C3's antenna end is specified, and step 3 now checks the 6.6 mm
+  connector envelope *before* the probe goes into the sleeve rather than after.
+- README gallery and repo tree updated; `cad/preview.py`/`render.py` description
+  corrected to say render.py draws two figures now.
+
+All six photographic views re-rendered from the current STLs, `check_fit` passes
+for rims 6/9/12, `esphome config` valid.
+
 
 **Checked the models against the actual Amazon listings.** 1.0.2 measured the parts;
 this checks whether those measurements describe the ASINs the BOM links. Answer:
