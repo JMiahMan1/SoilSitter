@@ -1,0 +1,22 @@
+# Python
+.venv-cad/
+.venv/
+__pycache__/
+*.py[cod]
+
+# CAD scratch
+cad/*.svg
+cad/*.step
+cad/*.brep
+*.3mf~
+
+# ESPHome
+firmware/.esphome/
+firmware/secrets.yaml
+firmware/*.bin
+firmware/.esphome*
+
+# macOS / editors
+.DS_Store
+.vscode/
+.idea/

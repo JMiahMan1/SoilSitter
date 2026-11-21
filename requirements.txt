@@ -1,0 +1,10 @@
+# CAD only. Firmware needs ESPHome (pip install esphome), not these.
+build123d==0.13.0
+trimesh==5.1.0
+manifold3d==3.5.5
+numpy==2.5.5
+shapely==2.2.0
+rtree==1.4.1
+networkx==3.7
+matplotlib==3.11.2
+pillow==13.0.0

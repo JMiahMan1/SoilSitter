@@ -1,0 +1,52 @@
+{
+  "body": {
+    "file": "body_rim12.stl",
+    "volume_cm3": 73.78,
+    "bbox_mm": [
+      88.0,
+      57.0,
+      144.5
+    ],
+    "solids": 1
+  },
+  "bay_lid": {
+    "file": "bay_lid_rim12.stl",
+    "volume_cm3": 12.66,
+    "bbox_mm": [
+      87.7,
+      2.5,
+      61.7
+    ],
+    "solids": 1
+  },
+  "probe_cap": {
+    "file": "probe_cap_rim12.stl",
+    "volume_cm3": 6.6,
+    "bbox_mm": [
+      25.3,
+      2.5,
+      106.5
+    ],
+    "solids": 1
+  },
+  "bay_gasket": {
+    "file": "bay_gasket_rim12.stl",
+    "volume_cm3": 0.82,
+    "bbox_mm": [
+      84.0,
+      1.0,
+      58.0
+    ],
+    "solids": 1
+  },
+  "probe_gasket": {
+    "file": "probe_gasket_rim12.stl",
+    "volume_cm3": 0.66,
+    "bbox_mm": [
+      24.4,
+      1.0,
+      105.0
+    ],
+    "solids": 1
+  }
+}

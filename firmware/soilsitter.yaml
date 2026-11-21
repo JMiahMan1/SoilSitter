@@ -1,0 +1,264 @@
+# SoilSitter - battery soil-moisture sensor for the SharedLLM (Jarvis) Garden
+#
+#   cp secrets.yaml.example secrets.yaml      # Wi-Fi + API key, then
+#   esphome run soilsitter.yaml               # first flash over USB-C
+#
+# One wake cycle: power the probe, measure soil + battery, publish, sleep.
+# The API encryption key is what the hub asks for when it adopts the node
+# (Home Hub -> Discovered -> SoilSitter -> Encryption key), and the Garden
+# binds `sensor.<node>_soil_moisture` per plant.
+---
+substitutions:
+  name: soilsitter
+  friendly_name: SoilSitter
+  # How often it wakes, and how long it stays awake. Soil changes over hours,
+  # so 30 min is plenty and roughly doubles the battery life of 15 min
+  # (docs/USAGE.md has the arithmetic). 30 s is enough for Wi-Fi + publish with
+  # room for an OTA; shorter windows save battery but risk a missed update.
+  sleep_interval: 30min
+  run_window: 30s
+  # Calibrate with the two voltage entities in the log or Home Hub
+  # (see docs/CALIBRATION.md). Probe V1.2 measured at 3.3 V.
+  soil_dry_voltage: "2.55"
+  soil_wet_voltage: "1.15"
+  # Li-ion curve end points, measured at the cell with no load.
+  battery_empty_voltage: "3.30"
+  battery_full_voltage: "4.15"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: true
+  project:
+    name: jmiahman.soilsitter
+    version: "1.0.0"
+  on_boot:
+    # Runs after every component is set up (priority -100), so the output and
+    # the template switch exist by the time this touches them.
+    - priority: -100
+      then:
+        # 1. Probe rail on, so it settles while Wi-Fi comes up.
+        - output.turn_on: soil_power
+        # 2. Never sleep before the hub has adopted the node, or first-time
+        #    setup would have to race the sleep timer.
+        - if:
+            condition:
+              lambda: return !id(provisioned);
+            then:
+              - deep_sleep.prevent: deep_sleep_1
+        # 3. A press of the wake button (GPIO3, the deep-sleep wake pin) buys
+        #    ten minutes awake for pairing, OTA or logs. A timer wake gets the
+        #    normal run window.
+        - lambda: |-
+            auto cause = esp_sleep_get_wakeup_cause();
+            if (cause != ESP_SLEEP_WAKEUP_TIMER && cause != ESP_SLEEP_WAKEUP_UNDEFINED) {
+              id(stay_awake).turn_on();
+            }
+        # 4. Measure once the probe has warmed up.
+        - delay: 2s
+        - component.update: soil_voltage
+        - component.update: battery_voltage
+        - component.update: wifi_signal_db
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      # This node lives indoors; 8.5 dBm is plenty and is most of the wake-up
+      # energy versus the default 20 dBm.
+      CONFIG_ESP_PHY_MAX_WIFI_TX_POWER: "34"
+
+logger:
+  level: INFO
+  # The SuperMini's USB-C is wired to the C3's native USB-Serial-JTAG.
+  hardware_uart: USB_SERIAL_JTAG
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+  # A sleeping node is offline by design; rebooting it for that would waste the
+  # battery.
+  reboot_timeout: 0s
+  on_client_connected:
+    - globals.set:
+        id: provisioned
+        value: "true"
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+    on_begin:
+      - deep_sleep.prevent: deep_sleep_1
+    on_end:
+      - deep_sleep.enter: deep_sleep_1
+    on_error:
+      - deep_sleep.enter: deep_sleep_1
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  power_save_mode: HIGH
+  reboot_timeout: 0s
+  ap:
+    ssid: "${name} fallback"
+    password: !secret ap_password
+
+captive_portal:
+
+globals:
+  - id: provisioned
+    type: bool
+    restore_value: true
+
+deep_sleep:
+  id: deep_sleep_1
+  sleep_duration: ${sleep_interval}
+  run_duration: ${run_window}
+  # Optional external push button from GPIO3 to GND (docs/WIRING.md). GPIO3 is
+  # one of the C3's RTC pins, so it can wake the chip; the on-board BOOT button
+  # is on GPIO9 and cannot. Input is pulled up internally, inverted so a press
+  # reads as a wake. KEEP_AWAKE: while the button is still held the node will not
+  # drop straight back to sleep.
+  wakeup_pin:
+    number: GPIO3
+    mode: INPUT_PULLUP
+    inverted: true
+  wakeup_pin_mode: KEEP_AWAKE
+
+output:
+  # Powers the probe only while measuring. The V1.2 probe draws ~5 mA, which a
+  # GPIO sources comfortably, and it is off for the whole sleep, so it cannot
+  # corrode the sensing electrode.
+  - platform: gpio
+    id: soil_power
+    pin: GPIO5
+
+sensor:
+  # --- soil ---------------------------------------------------------------
+  - platform: adc
+    id: soil_voltage
+    name: "Soil Voltage"
+    pin: GPIO0
+    attenuation: 12dB
+    samples: 16
+    sampling_mode: avg
+    # Only fires once per wake (the run window is shorter), but sampling keeps
+    # repeating while Stay Awake is on, which is how calibration works.
+    update_interval: 60s
+    accuracy_decimals: 3
+    unit_of_measurement: V
+    device_class: voltage
+    state_class: measurement
+    entity_category: diagnostic
+    filters:
+      - multiply: 1.0
+
+  - platform: copy
+    source_id: soil_voltage
+    name: "Soil Moisture"
+    id: soil_moisture
+    unit_of_measurement: "%"
+    device_class: moisture
+    state_class: measurement
+    icon: mdi:watering-can
+    accuracy_decimals: 0
+    filters:
+      # The V1.2 output falls as the soil gets wetter; calibrate per build.
+      - calibrate_linear:
+          - ${soil_dry_voltage} -> 0.0
+          - ${soil_wet_voltage} -> 100.0
+      - clamp:
+          min_value: 0.0
+          max_value: 100.0
+
+  # --- battery ------------------------------------------------------------
+  # 1M/1M divider on the cell node, 100 nF at the pin (docs/WIRING.md).
+  - platform: adc
+    id: battery_voltage
+    name: "Battery Voltage"
+    pin: GPIO1
+    attenuation: 12dB
+    samples: 16
+    sampling_mode: avg
+    update_interval: 60s
+    accuracy_decimals: 2
+    unit_of_measurement: V
+    device_class: voltage
+    state_class: measurement
+    entity_category: diagnostic
+    filters:
+      - multiply: 2.0
+
+  - platform: copy
+    source_id: battery_voltage
+    name: "Battery"
+    id: battery_level
+    unit_of_measurement: "%"
+    device_class: battery
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      - lambda: |-
+          const float empty = ${battery_empty_voltage};
+          const float full = ${battery_full_voltage};
+          float pct = (x - empty) / (full - empty) * 100.0f;
+          if (pct < 0.0f) pct = 0.0f;
+          if (pct > 100.0f) pct = 100.0f;
+          return pct;
+
+  - platform: wifi_signal
+    name: "Wi-Fi Signal"
+    id: wifi_signal_db
+    update_interval: never
+    entity_category: diagnostic
+
+  - platform: uptime
+    name: "Uptime"
+    update_interval: 60s
+    entity_category: diagnostic
+
+binary_sensor:
+  - platform: status
+    name: "Online"
+    entity_category: diagnostic
+
+switch:
+  # Bench work and calibration: stay awake until switched off, or 10 minutes.
+  - platform: template
+    name: "Stay Awake"
+    id: stay_awake
+    icon: mdi:sleep-off
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - deep_sleep.prevent: deep_sleep_1
+      - script.execute: awake_timeout
+    on_turn_off:
+      - script.stop: awake_timeout
+      - deep_sleep.enter: deep_sleep_1
+
+script:
+  - id: awake_timeout
+    then:
+      - delay: 10min
+      - if:
+          condition:
+            switch.is_on: stay_awake
+          then:
+            - switch.turn_off: stay_awake
+
+button:
+  - platform: restart
+    name: "Restart"
+    entity_category: config
+  - platform: safe_mode
+    name: "Safe Mode"
+    entity_category: config
+  - platform: template
+    name: "Sleep Now"
+    icon: mdi:power-sleep
+    entity_category: config
+    on_press:
+      - deep_sleep.enter: deep_sleep_1
