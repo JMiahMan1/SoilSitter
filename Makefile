@@ -2,13 +2,14 @@ PY ?= .venv-cad/bin/python
 RIMS ?= 6 9 12
 ESPHOME ?= esphome
 
-.PHONY: help venv stl check render firmware-config firmware-compile all clean
+.PHONY: help venv stl print-stl check render firmware-config firmware-compile all clean
 
 help:
 	@echo "make venv              create .venv-cad and install requirements.txt"
 	@echo "make stl               rebuild STLs for RIMS (default: 6 9 12)"
+	@echo "make print-stl         re-export stl/print/ in print orientations"
 	@echo "make check             fit/printability checks for RIMS"
-	@echo "make render            regenerate docs/diagrams/*.png"
+	@echo "make render            regenerate docs/diagrams/*.png (preview + section)"
 	@echo "make firmware-config   esphome config (needs firmware/secrets.yaml)"
 	@echo "make firmware-compile  full ESPHome build"
 	@echo "make all               venv + stl + check + render"
@@ -23,12 +24,18 @@ stl:
 		$(PY) cad/soilsitter.py --rim-gap $$r || exit 1; \
 	done
 
+print-stl:
+	@for r in $(RIMS); do \
+		$(PY) cad/orient.py --rim-gap $$r || exit 1; \
+	done
+
 check:
 	@for r in $(RIMS); do \
 		$(PY) cad/check_fit.py --rim-gap $$r || exit 1; \
 	done
 
 render:
+	$(PY) cad/preview.py
 	$(PY) cad/render.py
 
 firmware-config:
@@ -37,7 +44,7 @@ firmware-config:
 firmware-compile:
 	cd firmware && $(ESPHOME) compile soilsitter.yaml
 
-all: stl check render
+all: stl print-stl check render
 
 clean:
-	rm -rf cad/__pycache__ firmware/.esphome
+	rm -rf cad/__pycache__ firmware/.esphome stl/print

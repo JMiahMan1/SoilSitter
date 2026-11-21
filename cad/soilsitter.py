@@ -28,7 +28,8 @@ import argparse
 import json
 from pathlib import Path
 
-from build123d import Axis, Box, Cylinder, Pos, Rot, chamfer, export_stl, fillet
+from build123d import (Axis, Box, Cylinder, Plane, Polygon, Pos, Rot, chamfer,
+                       export_stl, extrude, fillet)
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -153,6 +154,16 @@ def make_body(rim_gap: float = RIM_GAP):
     body += box(-PROBE_W / 2, PROBE_W / 2, PROBE_Y_BACK, leg_y_out,
                 CAV_Z_TOP, PROBE_TOP)
 
+    # 45-degree roof over the sleeve's top. The sleeve's flat top is the one
+    # surface that hangs in mid-air when the body is printed bay-down, and a flat
+    # 25 x 6 mm ceiling there needs support. A ridge costs nothing: it is inside
+    # the pot, below the rim, out of sight, and it stiffens the sleeve/leg joint.
+    apex_z = PROBE_TOP + (PROBE_Y_BACK - PROBE_Y_FRONT) / 2
+    roof = Plane.YZ * Polygon((PROBE_Y_FRONT, PROBE_TOP),
+                              ((PROBE_Y_FRONT + PROBE_Y_BACK) / 2, apex_z),
+                              (PROBE_Y_BACK, PROBE_TOP), align=None)
+    body += extrude(roof, amount=PROBE_W / 2, both=True)
+
     # Cavity the sensor slides into, plus the cap seat behind it.
     body -= box(-CAV_X, CAV_X, CAV_Y_FRONT, CAV_Y_BACK, CAV_Z_BOT, CAV_Z_TOP)
     body -= box(-CAV_X + 0.1, CAV_X - 0.1, CAV_Y_BACK, PROBE_Y_BACK + 0.15,
@@ -229,18 +240,31 @@ def make_probe_cap():
 
 
 def make_bay_gasket():
-    """1 mm silicone sheet gasket (or print in TPU at 100 % infill)."""
-    g = box(-BAY_W / 2 + 2.0, BAY_W / 2 - 2.0, BAY_FRONT - 1.0, BAY_FRONT,
+    """1 mm silicone sheet gasket (or print in TPU at 100 % infill).
+
+    It lies on the lid's inner face (Y = 0), inside the bay's 1 mm rebate, and is
+    compressed against the bay's shoulder when the screws pull the lid home. The
+    hook bridge owns the bay's top strip, so the gasket is notched around it just
+    like the lid.
+    """
+    g = box(-BAY_W / 2 + 2.0, BAY_W / 2 - 2.0, 0.0, 1.0,
             BAY_BOT + 2.0, BAY_TOP - 2.0)
-    g -= box(-BAY_W / 2 + 5.0, BAY_W / 2 - 5.0, BAY_FRONT - 2.0, BAY_FRONT + 1,
+    g -= box(-BAY_W / 2 + 5.0, BAY_W / 2 - 5.0, -1.0, 2.0,
              BAY_BOT + 5.0, BAY_TOP - 5.0)
+    g -= box(-BRIDGE_W / 2 - 0.2, BRIDGE_W / 2 + 0.2, -1.0, 2.0,
+             -0.2, BAY_TOP + 1)
     return g
 
 
 def make_probe_gasket():
-    g = box(-CAV_X + 0.3, CAV_X - 0.3, 0, 1.0,
+    """Liner for the cap's seat: it fills the cavity's mouth behind the cap.
+
+    The cap is a plug, not a flanged lid, so this is radial compression in the
+    seat rather than a face seal - splash-proof, not submersible.
+    """
+    g = box(-CAV_X + 0.05, CAV_X - 0.05, CAV_Y_BACK - 1.0, CAV_Y_BACK,
             CAV_Z_BOT + 0.5, CAV_Z_TOP - 0.5)
-    g -= box(-CAV_X + 3.0, CAV_X - 3.0, -1, 2.0,
+    g -= box(-CAV_X + 3.0, CAV_X - 3.0, CAV_Y_BACK - 2.0, CAV_Y_BACK + 1.0,
              CAV_Z_BOT + 3.0, CAV_Z_TOP - 3.0)
     return g
 

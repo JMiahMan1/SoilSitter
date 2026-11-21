@@ -11,28 +11,46 @@ the print is off the bed, most of it waiting for silicone to cure.
 | Layer | 0.20 mm (0.28 mm is acceptable, 0.16 mm for the lid's sealing face) |
 | Walls | 3 perimeters, 4 on the body |
 | Infill | 15 % gyroid |
-| Supports | **Build-plate only**, under the rear of the bay floor |
-| Brim | 8 mm on the body |
-| Orientation | As exported: probe sleeve down, bay up |
+| Orientation | **Use `stl/print/`**, not `stl/` — those files are pre-rotated. Body: bay down, sleeve up (88 × 57 × 144.5 mm on the bed) |
+| Supports | **None.** All five parts are self-supporting; `check_fit` asserts 0 mm² of free overhang |
+| Brim | 8 mm, body only |
+| Bed | A 235 × 235 mm plate takes all five parts at once |
 
-Supports are needed in exactly one place: the bay's floor is an 88 × 30 mm plate
-that starts in mid-air. Because the supported face is the **underside of the bay**,
-the scars end up hidden against the pot. `cad/check_fit.py`'s overhang analysis
-puts the unsupported area at ~2300 mm² centred on Z ≈ −58 mm, Y ≈ 13–31 mm —
-that is the region to make sure your slicer paints. The rim hook bridges its
-11 mm slot on its own and does not need support.
+![The five parts in their print orientations on a 235 mm bed](diagrams/print_plate.png)
+
+**Why bay-down.** Printed the way the STL is modelled (sleeve down, bay up) the bay's
+floor is an 88 × 30 mm plate that starts in mid-air: a support job, and a 140 mm
+tower standing on a 32 × 13 mm foot. Turned over, the bay's rim face is on the bed
+(3685 mm² of contact, the heavy end low) and the sleeve rises from a wide base.
+`cad/orient.py` scores all 24 axis-aligned orientations and exports that one. It
+reports **0 mm² of free overhang** and ~2800 mm² of *bridged* area — interior
+ceilings over the bay and the probe cavity, which no support can reach and none is
+needed for: they are shelves carried on three walls, not floating plates. The
+numbers live in `stl/print/manifest_rim<N>.json`, and `cad/check_fit.py` fails the
+build if a geometry change puts a free overhang back.
+
+Getting to zero took one geometry change: the probe sleeve used to end in a flat
+25 x 6 mm top face, which hangs in mid-air when the body is printed bay-down. It is
+now roofed at 45° (a 6.5 mm ridge, `PROBE_TOP` in `cad/soilsitter.py`). That ridge
+sits inside the pot, below the rim, out of sight — and it stiffens the sleeve/leg
+joint, which was the other weak spot.
+
+**Known print risk.** It is still a 144.5 mm print with a 110 mm long, 32 × 13 mm
+sleeve standing up. It is stable because the mass is at the bottom, but use the brim
+and slow the first 40 mm on a bed-slinger. The height is set by the 98 mm probe PCB,
+so it cannot be shortened for this sensor.
 
 Expect **~50 g** of filament for the body and **~8 h** on a 0.4 mm nozzle at
 0.20 mm layers. The lid and cap are 25 minutes each.
 
 | Part | Print notes |
 |---|---|
-| `body` | Sleeve down. The 140 mm tall sleeve is a thin tower: brim is not optional. Check that the wire groove up the leg is clear with a 5 mm hex key before you assemble |
-| `body_rim12` | Adds one thing: support under the hook bridge, where the 12 mm rim leaves a 14.5 mm span. `check_fit --rim-gap 12` prints a NOTE instead of a pass for that reason |
+| `body` | Bay down, sleeve up (already rotated in `stl/print/`). The 45° roof over the sleeve is the reason it needs no support. Brim, and slow the first 40 mm. Check that the wire groove up the leg is clear with a 5 mm hex key before you assemble |
+| `body_rim12` | Same settings; the 14.5 mm hook bridge is at the bottom edge in this orientation and also needs nothing |
 | `bay_lid` | Print flat, outside face down. The bottom lip is a 1 mm feature — if your first layer squashes badly, the lip will not hook under the body; print it at 0.16 mm |
 | `probe_cap` | Flat, gasket groove up |
 | `bay_gasket` | TPU at 0.20 mm, or cut from 1 mm silicone sheet using the STL as a template |
-| `probe_gasket` | Same |
+| `probe_gasket` | Same. It is 106 mm long and only 1 mm thick: a cold bed will curl it, so print it last and let it cool flat |
 
 ## Fasteners
 
@@ -69,11 +87,14 @@ minutes will hold it for another cycle.
 7. **Dress the wiring.** The probe bundle goes up the leg groove and into the bay
    through the notch at the top; leave 30 mm of slack inside the bay so the lid
    closes without trapping a wire.
-8. **Gaskets and lid.** Gasket onto the lid's groove, lip under the body's bottom
-   edge, hinge the lid up, four screws finger-tight then a quarter turn. Do not
+8. **Gaskets and lid.** Gasket flat on the lid's inner face - it sits inside the
+   bay's 1 mm rebate, so it should drop in without stretching. Then the lid's lip
+   under the body's bottom edge, hinge the lid up, four screws finger-tight then a
+   quarter turn. Do not
    overtighten: the gasket only needs to be compressed, and the pilot is plastic.
-9. **Probe cap.** Gasket into the cap groove, cap over the sleeve's bottom lip,
-   press until it clicks past the lip. It is trapped top and bottom, no screws.
+9. **Probe cap.** Gasket into the cavity mouth (it lines the seat, flush with the
+   opening), then the cap over it and the sleeve's bottom lip - press until it
+   clicks past the lip. It is trapped top and bottom, no screws.
    If you want it removable, a 20 mm strip of kapton tape across the seam is
    enough indoors.
 10. **Hang it.** Slide the hook over the rim from the outside, leg first, probe

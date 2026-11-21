@@ -11,6 +11,10 @@ for rim in 6 9 12; do
     "$PY" cad/soilsitter.py --rim-gap "$rim"
 done
 
+echo "== print orientations"
+"$PY" cad/orient.py --rim-gap 9
+
 echo "== diagrams"
+"$PY" cad/preview.py
 "$PY" cad/render.py
 echo "done: $(ls stl/*.stl | wc -l | tr -d ' ') STLs, $(ls docs/diagrams/*.png | wc -l | tr -d ' ') images"

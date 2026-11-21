@@ -1,7 +1,7 @@
 {
   "body": {
     "file": "body_rim6.stl",
-    "volume_cm3": 75.46,
+    "volume_cm3": 76.8,
     "bbox_mm": [
       88.0,
       57.0,
@@ -31,7 +31,7 @@
   },
   "bay_gasket": {
     "file": "bay_gasket_rim6.stl",
-    "volume_cm3": 0.82,
+    "volume_cm3": 0.64,
     "bbox_mm": [
       84.0,
       1.0,
@@ -41,9 +41,9 @@
   },
   "probe_gasket": {
     "file": "probe_gasket_rim6.stl",
-    "volume_cm3": 0.66,
+    "volume_cm3": 0.71,
     "bbox_mm": [
-      24.4,
+      24.9,
       1.0,
       105.0
     ],

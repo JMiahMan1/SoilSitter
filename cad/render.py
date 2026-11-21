@@ -1,11 +1,9 @@
 """
-Preview renders for SoilSitter:
+The X=0 cutaway drawing: printed parts, the pot wall, the soil line and the real
+hardware the plane cuts through. The photographed-looking views are in
+cad/preview.py; this file is the technical drawing.
 
-  docs/diagrams/hero.png      assembled on a pot rim, isometric
-  docs/diagrams/section.png   X=0 section with the real hardware in place
-
-A small numpy z-buffer rasteriser for the hero (no GPU, no window), and exact
-mesh sections for the drawing.
+  docs/diagrams/section.png
 
     .venv-cad/bin/python cad/render.py
 """
@@ -229,23 +227,8 @@ def draw_section(rim_gap: float, path: Path):
 
 
 def main():
+    """The cutaway drawing only: cad/preview.py owns the photographic views."""
     rim_gap = float(sys.argv[1]) if len(sys.argv) > 1 else ss.RIM_GAP
-    body = trimesh.load(STL / f"body_rim{rim_gap:g}.stl")
-    lid = trimesh.load(STL / f"bay_lid_rim{rim_gap:g}.stl")
-    cap = trimesh.load(STL / f"probe_cap_rim{rim_gap:g}.stl")
-
-    scene = [(body, COLORS["body"]), (lid, COLORS["bay_lid"]),
-             (cap, COLORS["probe_cap"])]
-    img = render(scene, eye=(-250, -255, 70), target=(0, 2, -68),
-                 size=(1000, 1000), fov_mm=330, light=(-0.45, -0.5, 0.74))
-    save(img, OUT / "hero.png")
-
-    mounted = [(body, COLORS["body"]), (lid, COLORS["bay_lid"]),
-               (cap, COLORS["probe_cap"])]
-    mounted += pot_meshes(rim_gap)[:2]
-    img = render(mounted, eye=(230, 210, 135), target=(0, -4, -58),
-                 size=(1000, 1000), fov_mm=250, light=(-0.35, 0.55, 0.75))
-    save(img, OUT / "mounted.png")
     draw_section(rim_gap, OUT / "section.png")
 
 

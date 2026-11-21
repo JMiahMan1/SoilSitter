@@ -1,6 +1,66 @@
 # Changelog
 
+## 1.0.1 — 2026-11-20
+
+**Fixed: both gaskets were modelled floating in mid-air.** Rendering the parts
+from different angles (rather than flat drawings) exposed it: the bay gasket sat 1.5
+mm outside the lid and the probe gasket hung 11 mm away from the sleeve, in the gap
+where the pot wall goes. Neither was visible in an assembled view, and neither would
+have sealed anything on a printed part.
+
+- `bay_gasket` now lies on the lid's inner face (Y 0–1 mm), inside the bay's 1 mm
+  rebate, and is notched around the hook bridge.
+- `probe_gasket` now lines the cavity mouth (Y −15…−14 mm), against the cap's inner
+  face: radial compression in the seat, which is what a plug-type cap can actually
+  do. It is a splash seal, not a face seal.
+- `check_fit.py` gained four checks that assert each gasket touches the part it
+  seals and fits inside it, so this cannot come back silently.
+
+**Printability (asked, measured, then fixed)**
+
+As exported, this was not an easy print, and the numbers say why:
+
+- The body is 144.5 mm tall with its mass in the bay, so sleeve-down on the bed
+  meant a 140 mm tower on a 32 × 13 mm foot *and* an 88 × 30 mm bay floor starting
+  in mid-air. Turned over (bay down, sleeve up) the bed contact becomes 3685 mm²
+  and the heavy end sits on the plate.
+- The lid, cap and both gaskets were exported in assembly orientation, i.e. standing
+  on a 1–2.5 mm edge. Unprintable on any machine; they are all flat now.
+- The last 406 mm² of free overhang was the probe sleeve's flat 25 × 6 mm top face.
+  It is roofed at 45° now (a 6.5 mm ridge), which takes the free overhang to
+  **0 mm²** — all five parts print with no support at all.
+
+- `cad/orient.py` scores all 24 axis-aligned orientations per part (free overhang,
+  the height of that overhang, bed contact, slenderness), separating overhang that
+  needs support from internal bridging that no support can reach, and writes
+  `stl/print/` pre-rotated plus `manifest_rim<N>.json`. Measured for rim 9: body
+  88 × 57 × 144.5 mm, 0 mm² support, 2832 mm² bridged.
+- `check_fit.py` imports the same scoring and fails if a free overhang comes back.
+- `docs/diagrams/print_plate.png`: all five parts on a 235 mm bed in their print
+  orientations, rendered from the exported print STLs.
+- `ASSEMBLY.md` says which units to slice (no support anywhere) and names the one
+  real risk left: a 144.5 mm print that wants a brim and a slow first 40 mm on a
+  bed-slinger. The height is set by the 98 mm probe PCB and cannot be reduced.
+
+**Added**
+
+- `cad/preview.py`: an orthographic z-buffer renderer with per-corner normals
+  (smooth fillets, hard edges), camera-relative three-light shading, 2–3× super-
+  sampling, studio background, contact shadow, ghosted-material pass and PIL
+  leader-line labels. It produces the README gallery: `hero.png`, `exploded.png`,
+  `mounted.png`, `room_view.png`, `views.png` (front/side/back).
+- `render.py` is now only the X=0 cutaway (`section.png`); the photographic views
+  moved to `preview.py`.
+
+**Changed**
+
+- `ASSEMBLY.md` describes where each gasket actually goes.
+- The README gallery captions the room view honestly: the bay's top plate stands
+  4.5 mm proud of the rim, so a sliver shows over it from the room. Hang the unit
+  with that sliver behind the foliage.
+
 ## 1.0.0 — 2026-11-20
+
 
 First release: a complete battery-powered soil-moisture sensor that hangs on a pot.
 

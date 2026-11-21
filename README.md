@@ -6,7 +6,7 @@ no hub in the middle of the plant — the electronics bay sits on the outside of
 pot, the probe slides down the inside wall, and the whole thing disappears when you
 look at the plant from the room.
 
-![SoilSitter hanging on a pot rim](docs/diagrams/hero.png)
+![SoilSitter assembled](docs/diagrams/hero.png)
 
 ESPHome firmware, 3D-printable case, months on a charge, and it drops straight
 into the [SharedLLM](../SharedLLM) **Home Hub / Garden** stack, where it shows up as
@@ -18,7 +18,7 @@ a plant that needs water.
 | **Sensor** | Capacitive Soil Moisture Sensor V1.2 (corrosion-resistant, analogue) |
 | **Power** | 103450 LiPo 2000 mAh + TP4056 Type-C charge board |
 | **Run time** | ~5 months at a 30 min wake interval, estimated (see [docs/USAGE.md](docs/USAGE.md)) |
-| **Case** | 3 parts + 2 gaskets, ~50 g of filament, one support region (hidden) |
+| **Case** | 3 parts + 2 gaskets, ~50 g of filament, **no supports**; pre-oriented in `stl/print/` |
 | **Integration** | ESPHome native API → Home Hub, `device_class: moisture` → Garden |
 | **Pot fit** | 9 mm rim by default; 6 mm and 12 mm variants included |
 
@@ -44,18 +44,36 @@ probe wires over the rim and into the bay. Nothing is glued, screwed or clamped 
 the pot: the hook is a close sliding fit on the rim, and the weight of the bay
 counterbalances the probe.
 
-![Mounted on a pot, front view](docs/diagrams/mounted.png)
+## What it looks like
 
-![Cross-section through the hook, leg and probe sleeve](docs/diagrams/section.png)
+| Assembled | Hung on a pot |
+|---|---|
+| ![The three printed parts, assembled](docs/diagrams/hero.png) | ![Clipped over a pot rim, charge port on the outside](docs/diagrams/mounted.png) |
+| **From the room** — the bay's top plate is the only thing that shows over the rim | **From the pot side** — the hook over the rim, the leg down the inside wall, the sleeve in the soil |
+
+| From the room, at eye level | Exploded |
+|---|---|
+| ![The same pot seen from the room](docs/diagrams/room_view.png) | ![The five printed parts pulled apart](docs/diagrams/exploded.png) |
+| Nothing but the pot and the plant: the bay, the charge port and the wires are all on the far side | Body (bay, hook, leg, sleeve), bay lid + gasket, probe cap + gasket |
+
+![Front, side and back orthographic views](docs/diagrams/views.png)
+
+![Cutaway through X=0: printed parts, pot wall, soil and the hardware](docs/diagrams/section.png)
+
+*Rendered from the exported STLs by `cad/preview.py` and `cad/render.py`, with the
+real hardware boxes from `cad/check_fit.py`; no photographs, no manual retouching.*
 
 ## Repo layout
 
 ```
-cad/            parametric build123d model, fit checks, renderer
+cad/            parametric build123d model, fit checks, renderers
   soilsitter.py   the case (--rim-gap 6 | 9 | 12)
   check_fit.py    watertightness, packing, clearance, wire-route checks
-  render.py       diagrams in docs/diagrams/
-stl/            printable STLs per rim size + manifest_rim<N>.json
+  orient.py       picks each part’s print orientation, writes stl/print/
+  preview.py      photoreal previews: hero, exploded, mounted, room, views, plate
+  render.py       the X=0 cutaway drawing
+stl/            STLs in assembly orientation + manifest_rim<N>.json
+  print/          the same parts pre-rotated for printing + manifest.json
 firmware/       soilsitter.yaml, secrets.yaml.example
 docs/           BOM, wiring, assembly, calibration, usage, integration
 tools/          build.sh, validate.sh
@@ -65,8 +83,8 @@ tools/          build.sh, validate.sh
 
 ```bash
 # 1. Print (rim 9 mm is the default; see docs/ASSEMBLY.md for settings)
-make stl                      # or: python cad/soilsitter.py --rim-gap 6
-# files land in stl/: body_rim9.stl, bay_lid_rim9.stl, probe_cap_rim9.stl, + gaskets
+make stl print-stl            # geometry, then print-ready orientations
+# stl/ = assembly orientation; stl/print/ = the files you actually slice
 
 # 2. Wire it (docs/WIRING.md) and calibrate the probe (docs/CALIBRATION.md)
 

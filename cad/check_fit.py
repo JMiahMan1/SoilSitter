@@ -189,11 +189,30 @@ def main():
            f"cap width {cap.extents[0]:.1f} mm fits the {2 * ss.CAV_X:.1f} mm seat "
            f"(0.15 mm press-fit ribs)")
 
-    # -- 7. printability ---------------------------------------------------
-    # The body prints as exported (probe sleeve down, bay up), so any face
-    # steeper than 45 deg from vertical either lands on the plate or needs
-    # support. Localise the support region so ASSEMBLY.md can name it.
-    print("\nprintability (body, printed as exported)")
+    # -- 6b. the gaskets must touch what they seal against ------------------
+    # Both used to be modelled floating in mid-air: invisible assembled, wrong
+    # the moment anyone printed them, so they get their own checks.
+    bg, pg = meshes["bay_gasket"], meshes["probe_gasket"]
+    report(abs(bg.bounds[0][1] - lid.bounds[0][1]) < 0.05,
+           f"bay gasket lies on the lid's inner face "
+           f"(Y {bg.bounds[0][1]:.2f} vs lid {lid.bounds[0][1]:.2f})")
+    report(bg.bounds[1][0] - bg.bounds[0][0] <= lid.extents[0]
+           and bg.bounds[1][2] - bg.bounds[0][2] <= lid.extents[2],
+           f"bay gasket {bg.extents[0]:.1f} x {bg.extents[2]:.1f} mm sits inside "
+           f"the {lid.extents[0]:.1f} x {lid.extents[2]:.1f} mm lid")
+    report(abs(pg.bounds[1][1] - cap.bounds[0][1]) < 0.05,
+           f"probe gasket sits against the cap's inner face "
+           f"(Y {pg.bounds[1][1]:.2f} vs cap {cap.bounds[0][1]:.2f})")
+    report(pg.bounds[1][0] - pg.bounds[0][0] <= 2 * ss.CAV_X + 0.1,
+           f"probe gasket {pg.extents[0]:.1f} mm fits the "
+           f"{2 * ss.CAV_X:.1f} mm cavity mouth")
+
+
+    # -- 7. overhangs ------------------------------------------------------
+    # Measured in assembly orientation; cad/orient.py rotates the part onto its
+    # bed and splits these into free overhangs and internal bridges. Keep the
+    # numbers here so a geometry change that adds overhang is visible.
+    print("\noverhangs in assembly orientation (see cad/orient.py for print orientation)")
     down = body.face_normals[:, 2] < -0.72
     area = body.area_faces[down]
     lo = body.triangles[down].reshape(-1, 3).min(axis=0)
@@ -201,18 +220,22 @@ def main():
     report(area.sum() < 0.20 * body.area,
            f"overhang area {area.sum():.0f} mm2 "
            f"({100 * area.sum() / body.area:.0f}% of the surface)")
+    # The promise that matters: in the orientation orient.py picks, nothing is
+    # left hanging that support material would have to hold up.
+    from orient import best_orientation
+    pstats, ptag, _ = best_orientation(body)[0]
+    report(pstats["free"] < 250,
+           f"prints without support ({ptag}: {pstats['free']:.0f} mm2 free "
+           f"overhang, {pstats['bridged']:.0f} mm2 bridged inside)")
     # Everything below Z = -128 is the sleeve's own bottom lip, which is a
     # 1.6 mm chamfer and prints fine. The rest wants support under the bay.
     bay_floor = down & (body.triangles_center[:, 2] < -50) \
                      & (body.triangles_center[:, 2] > -62) \
                      & (body.triangles_center[:, 1] > 0)
     report(0 < bay_floor.sum(),
-           f"bay floor overhang {body.area_faces[bay_floor].sum():.0f} mm2 at "
-           f"Z {body.triangles_center[bay_floor][:, 2].min():.0f}.."
-           f"{body.triangles_center[bay_floor][:, 2].max():.0f} mm, "
-           f"Y {body.triangles_center[bay_floor][:, 1].min():.0f}.."
-           f"{body.triangles_center[bay_floor][:, 1].max():.0f} mm "
-           f"-> supports from the build plate")
+           f"bay floor plate {body.area_faces[bay_floor].sum():.0f} mm2 is the "
+           f"one wide span, and only when printed sleeve-down; bay-down it is "
+           f"the bay's interior ceiling, bridged from three walls")
     # The hook has to bridge its own rim slot. Up to 12 mm is a clean PETG
     # bridge at 0.2 mm layers; beyond that the 12 mm variant needs support
     # under the bridge, which ASSEMBLY.md mentions.
