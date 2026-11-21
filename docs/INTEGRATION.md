@@ -1,7 +1,7 @@
 # Home Hub and Garden integration
 
 SoilSitter speaks the ESPHome native API. That is the only integration path it
-needs: [SharedLLM](../SharedLLM)'s Home Hub adopts ESPHome nodes directly over the
+needs: [SharedLLM](../../SharedLLM)'s Home Hub adopts ESPHome nodes directly over the
 API (no HA in the middle), and its Garden binds the `moisture` sensor to a plant.
 
 Two things make it work, and both are already in the firmware:

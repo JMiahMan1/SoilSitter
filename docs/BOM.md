@@ -24,7 +24,7 @@ Notes on each:
 1. **ESP32-C3 SuperMini.** Any C3 SuperMini clone works. Avoid the C3/C6 boards
    that are 26 mm wide — they do not fit the 22.5 mm bay channel. Many clones ship
    with a bright red power LED that costs ~1 mA continuously; see
-   [docs/USAGE.md](docs/USAGE.md#the-power-led) for removing it (roughly doubles
+   [USAGE.md](USAGE.md#the-power-led) for removing it (roughly doubles
    run time) or leave it and accept ~3 months.
 2. **Sensor V1.2, not V1.0, not "V2.0", not resistive.** V1.2 is the 555-timer
    board with a 3–5 year electrode life and a 0.3–3.0 V output. The case is cut
