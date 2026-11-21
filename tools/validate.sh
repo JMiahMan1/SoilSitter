@@ -13,6 +13,14 @@ for rim in 6 9 12; do
     if ! "$PY" cad/check_fit.py --rim-gap "$rim"; then status=1; fi
 done
 
+echo "== printability audit (overhang spans in stl/print)"
+if ! "$PY" cad/printability.py --all-rims > /tmp/soilsitter-printability.log 2>&1; then
+    tail -30 /tmp/soilsitter-printability.log
+    status=1
+else
+    echo "no unsupported span over 30 mm in any part"
+fi
+
 echo "== esphome config"
 if ! command -v esphome >/dev/null 2>&1; then
     echo "esphome not installed - skipping (pip install esphome)" >&2

@@ -1,6 +1,51 @@
 # Changelog
 
-## 1.0.4 — 2026-11-20
+## 1.0.5 — 2026-11-20
+
+**Loaded the parts in a real slicer, because "self-supporting" was my own
+definition, not CuraEngine's.** OrcaSlicer 2.4.2 is installed, so the claim could be
+tested instead of argued: slice, then count `;TYPE:Support` toolpaths.
+
+| Slice | Support moves |
+|---|---|
+| `stl/print/body_rim9.stl`, supports **off** | **0** |
+| same, supports **on**, default profile | **22,615** |
+| same, `bridge_no_support=1`, `max_bridge_length=40`, 60° | 14,303 |
+| `stl/body_rim9.stl` (assembly position), supports on | 52,922 |
+
+What that showed:
+
+- **The part does print without support** — the 82 × 27 mm bay ceiling comes out as
+  `Internal Bridge` (1513 moves) plus `Bridge`, i.e. spanned between walls. But a
+  *default* slice wants 22,615 support moves, because Orca's `max_bridge_length`
+  is **10 mm**: anything wider is an overhang to it. So the complaint was right in
+  the way that matters — slice it with default settings and it fills the bay
+  (z 4.5–57.5) and the probe cavity (z 34.5–140.5) with support that cannot be
+  removed through either opening.
+- **The `stl/` folder is the usual trap**: same part in assembly position is
+  6218 mm² of overhang with a 44 mm span and 52,922 support moves.
+- My earlier claim of "0 mm² of free overhang" was true to its own definition
+  (`orient.py` counts a face as free only if *nothing* is below it, so a 27 mm
+  ceiling 57 mm up counts as "bridged") and misleading in a build plan. Numbers
+  now come from a slicer, and the definition is written down where it is used.
+
+New and changed:
+
+- **`cad/printability.py`** — measures each part in its print orientation: every
+  overhang region ≥52°, its true span from vertices (not centroids — one 82 × 27
+  triangle has its centroid in the middle), the height above the bed, and a verdict
+  at 15/30 mm. Runs without a slicer; `make print-check`, and wired into
+  `tools/validate.sh`.
+- **`stl/README.md`** (new): which folder to print, the measured numbers for both,
+  the Orca table, and the settings that make a default slice behave.
+- **ASSEMBLY.md**: the "Supports: None" row now says **Off**, with the reason;
+  new "What the slicer will do" table (27 mm bridge at 57.5 mm, 11 mm at 140 mm,
+  everything else ≤13 mm); the stiffness risk (87 mm cantilever) called out
+  separately from overhang risk.
+- The old paragraph claiming "0 mm² of free overhang… no support can reach" was
+  rewritten: the ceilings *are* reachable by support from the bed, which is exactly
+  why a default slice fills them.
+
 
 **Diagrams and assembly instructions brought in line with the measured hardware.**
 
