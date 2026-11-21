@@ -208,15 +208,15 @@ def draw_section(rim_gap: float, path: Path):
     ax.annotate("pot wall", (0, -120), xytext=(-9, -126), fontsize=8,
                 va="center", ha="right",
                 arrowprops=dict(arrowstyle="-", lw=0.6, color="#444"))
-    ax.annotate("rim top (Z=0)", (0, 0), xytext=(24, 12), fontsize=8,
+    ax.annotate("rim top (Z=0)", (-4, 0), xytext=(-30, 14), fontsize=8,
                 arrowprops=dict(arrowstyle="-", lw=0.6, color="#444"))
     ax.annotate("soil line", (-44, -34), xytext=(-68, -30), fontsize=8,
                 arrowprops=dict(arrowstyle="-", lw=0.6, color="#7a6048"))
     ax.annotate("wire groove", (-12.0, -14.0), xytext=(18, -6), fontsize=8,
                 arrowprops=dict(arrowstyle="-", lw=0.6, color="#444"))
 
-    ax.set_xlim(-70, 42)
-    ax.set_ylim(-150, 30)
+    ax.set_xlim(-64, 38)
+    ax.set_ylim(-146, 26)
     ax.set_aspect("equal")
     ax.set_xlabel("Y (mm) - behind the pot -> +Y")
     ax.set_ylabel("Z (mm)")
