@@ -76,26 +76,53 @@ The same live percentage feeds the plant card's `💧` pill and `live_moisture_p
 in `GET /today`, which is what Jarvis answers with when you ask "does the monstera
 need water?".
 
+### Sleeping nodes and the live verdict
+
+Be clear-eyed about this one. Home Hub marks a node's entities `unavailable` as soon
+as it disconnects (`mark_unavailable` in `services/homehub/core.py`), and
+`homehub_hardware.moisture_verdict` treats "no reading" as *offline: the normal
+schedule applies*. A SoilSitter is only connected for its 30-second window every
+30 minutes, so it is unavailable ~98 % of the time:
+
+- the **schedule** always works — it never depends on the sensor;
+- the **moisture override** is opportunistic: it bites only if the Garden happens
+  to evaluate while the node is awake;
+- the **pill** shows a value only when one is present;
+- a **dead battery can never stop watering**, which is exactly the failure mode the
+  Garden's "offline changes nothing" rule was written for.
+
+If you want the override to be reliable, the honest options are a shorter sleep
+interval (`sleep_interval: 5min` gives ~10 % uptime, at a month of battery life), a
+longer run window, or mains power and no deep sleep at all. For a pot on a shelf,
+trust the schedule and treat the live number as a bonus — that is what the hardware
+can actually deliver.
+
+Expect reconnect warnings in the hub's log for every wake. They are the node
+arriving, not a fault.
+
+
 ## 4. Useful automations
 
-Written against Home Hub's entity ids; adjust `<hex>`.
+Two that work as written; adjust `<hex>` to your node.
 
 ```yaml
-# Charge reminder: below 20 % while the plant is still fine
+# Charge reminder: the battery entity updates on every wake, so this is reliable
 trigger: numeric_state, sensor.soilsitter_<hex>_battery, below: 20
 action:  notify "SoilSitter on the monstera is at 18 % — charge it"
 
-# Dead node: no update for two hours (four wake windows)
-trigger: state, binary_sensor.soilsitter_<hex>_online, to: "off", for: "2:00:00"
-action:  notify "SoilSitter stopped reporting"
-
-# Prime the pump before a heatwave
+# Heatwave: nudge the Garden a day early (a notification, not a valve)
 trigger: numeric_state, sensor.soilsitter_<hex>_soil_moisture, below: 25
-action:  garden.log_care(plant, watered)  # or a valve run on a bound bed
+action:  notify "Monstera soil is at 22 % — water it today"
 ```
 
-Avoid automations that *act* on every moisture reading: the reading is up to 30
-minutes old by design, and a watering decision made on a stale dry value is how
+What does **not** work here: "alert if the node is offline". `binary_sensor.online`
+goes unavailable on every disconnect, so the trigger fires 48 times a day. For a
+dead node, watch the **age of the last moisture or battery update** (Home Hub's
+telemetry shows the gap directly) or the battery trend across a week — both survive
+the sleep cycle, and neither cries wolf.
+
+Also avoid automations that *act* on every moisture reading: the value is up to 30
+minutes old by design, and a watering decision made on a stale dry reading is how
 plants get drowned.
 
 ## 5. Day-to-day commands

@@ -11,10 +11,13 @@ t+5s      probe sample (16 reads averaged), battery sample
 t+30s     deep sleep, run_duration expires
 ```
 
-Everything between wakes is dark: no Wi-Fi, no probe power, ~45 µA. That is why
-the node appears **unavailable** in Home Hub between wake-ups — that is the design,
-not a fault. Entities carry their last value with a last-seen timestamp, and Home
-Hub only shows a sensor as unavailable once a wake window is missed.
+Everything between wakes is dark: no Wi-Fi, no probe power, ~45 µA. Home Hub marks
+a node's entities **unavailable** the moment it disconnects, so that is what a
+sleeping SoilSitter looks like for ~98 % of the day — by design, not a fault. It
+reconnects with backoff, logs a disconnect warning each time, and republishes on
+the next wake. Do not build an automation that treats `unavailable` as a fault on
+this node. To detect a dead unit, watch the age of the last moisture or battery
+update ([INTEGRATION.md](INTEGRATION.md)), not the connectivity sensor.
 
 ## Entities
 
@@ -26,7 +29,7 @@ Hub only shows a sensor as unavailable once a wake window is missed.
 | `sensor.<node>_battery_voltage` | `V`, diagnostic | Divider sanity check |
 | `sensor.<node>_wifi_signal` | dBm, diagnostic | Where to hang the pot |
 | `sensor.<node>_uptime` | s, diagnostic | Confirms the node is cycling, not stuck |
-| `binary_sensor.<node>_online` | connectivity | Alerting on a dead node |
+| `binary_sensor.<node>_online` | connectivity | True only while awake; unavailable between wakes, so do not alert on it |
 | `switch.<node>_stay_awake` | switch | Disables deep sleep; auto-off after 10 min |
 | `button.<node>_sleep_now` | button | Sleep immediately, do not wait the window |
 | `button.<node>_restart` / `_safe_mode` | buttons | Recovery |
