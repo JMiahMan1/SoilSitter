@@ -13,7 +13,7 @@ to cure.
 | Walls | 3 perimeters, 4 on the body |
 | Infill | 15 % gyroid |
 | Orientation | **Use `stl/print/`**, not `stl/` — those files are pre-rotated. Body: bay down, sleeve up (88 × 57 × 144.5 mm on the bed) |
-| Supports | **None.** All five parts are self-supporting; `check_fit` asserts 0 mm² of free overhang |
+| Supports | **Off.** It does print without support, but a default slice will not agree: OrcaSlicer fills the bay and the probe cavity unless supports are disabled. Numbers and settings below |
 | Brim | 8 mm, body only |
 | Bed | A 235 × 235 mm plate takes all five parts at once |
 
@@ -23,12 +23,32 @@ to cure.
 floor is an 88 × 30 mm plate that starts in mid-air: a support job, and a 140 mm
 tower standing on a 32 × 13 mm foot. Turned over, the bay's rim face is on the bed
 (3685 mm² of contact, the heavy end low) and the sleeve rises from a wide base.
-`cad/orient.py` scores all 24 axis-aligned orientations and exports that one. It
-reports **0 mm² of free overhang** and ~2800 mm² of *bridged* area — interior
-ceilings over the bay and the probe cavity, which no support can reach and none is
-needed for: they are shelves carried on three walls, not floating plates. The
+`cad/orient.py` scores all 24 axis-aligned orientations and exports that one. The
 numbers live in `stl/print/manifest_rim<N>.json`, and `cad/check_fit.py` fails the
-build if a geometry change puts a free overhang back.
+build if a geometry change puts a free-floating overhang back.
+
+**Checked in a slicer, not just by my own rule** (OrcaSlicer 2.4.2, 0.4 mm nozzle,
+0.20 mm layers, PLA, counting `;TYPE:Support` toolpaths):
+
+| Slice | Support moves |
+|---|---|
+| `stl/print/body_rim9.stl`, supports **off** | **0** |
+| same, supports **on**, default profile | 22,615 |
+| same, `bridge_no_support=1`, `max_bridge_length=40`, 60° | 14,303 |
+| `stl/body_rim9.stl` (assembly position), supports on | 52,922 |
+
+With supports off, the 82 × 27 mm bay ceiling is emitted as `Internal Bridge`
+(1513 moves) plus `Bridge` — spanned between its walls, which is what the print
+needs. With supports on, the slicer instead fills the bay from z 4.5 to 57.5 and the
+probe cavity from z 34.5 to 140.5, and **neither void can be cleaned out**
+(27 mm and 25 × 9 mm openings).
+
+Why the default disagrees: Orca's `max_bridge_length` is **10 mm**. Anything wider
+is an overhang to it, and the bay's ceiling is 27 mm. So the rule is: **supports
+off**, and if you ever slice with supports on for another reason, set
+`bridge_no_support` and raise `max_bridge_length` past 30 mm.
+
+`cad/printability.py` reports the same spans without a slicer (`make print-check`).
 
 Getting to zero took one geometry change: the probe sleeve used to end in a flat
 25 x 6 mm top face, which hangs in mid-air when the body is printed bay-down. It is
@@ -36,10 +56,11 @@ now roofed at 45° (a 6.5 mm ridge, `PROBE_TOP` in `cad/soilsitter.py`). That ri
 sits inside the pot, below the rim, out of sight — and it stiffens the sleeve/leg
 joint, which was the other weak spot.
 
-**Known print risk.** It is still a 144.5 mm print with a 110 mm long, 32 × 13 mm
-sleeve standing up. It is stable because the mass is at the bottom, but use the brim
-and slow the first 40 mm on a bed-slinger. The height is set by the 98 mm probe PCB,
-so it cannot be shortened for this sensor.
+**Known print risk — stiffness, not overhang.** It is a 144.5 mm print with an
+87 mm cantilever above the bay: the sleeve is 32 × 13 mm at its base and carries a
+45° ridge at the top, 140 mm up. It is stable because the mass is at the bottom, but
+use the brim and slow the top third to ~40 mm/s on a bed-slinger. The height is set
+by the 98 mm probe PCB, so it cannot be shortened for this sensor.
 
 Expect **~50 g** of filament for the body and **~8 h** on a 0.4 mm nozzle at
 0.20 mm layers. The lid and cap are 25 minutes each.

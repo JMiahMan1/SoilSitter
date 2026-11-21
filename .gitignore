@@ -20,3 +20,6 @@ firmware/.esphome*
 .DS_Store
 .vscode/
 .idea/
+# OrcaSlicer leaves these in the working directory when slicing from the CLI
+00000.log
+plate_*.gcode
