@@ -16,7 +16,7 @@ python cad/check_fit.py --rim 6     # also 9 and 12
 
 | Part | Published size (mm) | Source | Case allowance | Clearance |
 |---|---|---|---|---|
-| ESP32-C3 SuperMini | **22.52 × 18**, 1.6 PCB + 3.2 USB-C, 2.54 pitch | [espboards.dev](https://www.espboards.dev/esp32/esp32-c3-super-mini/) — they measure it, quote 22.52 × 18, and link the GrabCAD model | 18 × 22.5 channel, 5 mm deep on the lid | **3.0 mm** to the sides |
+| ESP32-C3 SuperMini | **22.52 × 18**, 1.6 PCB + 3.2 USB-C, 2.54 pitch | [espboards.dev](https://www.espboards.dev/esp32/esp32-c3-super-mini/) — they measure it, quote 22.52 × 18, and link the GrabCAD model | open bay, 4.8 mm deep on the lid (no printed channel) | **3.0 mm** to the sides |
 | TP4056 Type-C module | **17.3 × 29 × 4.3** overall (26 × 17 board + 3 mm Type-C shell) | [Xem Studio measured outline](https://xemstudio.com/) — free STEP/STL, CC BY 4.0; [sigmanortec](https://sigmanortec.ro/en/lithium-battery-charging-module-tp4056-typec-5v-1a-with-protection) gives 26 × 17 for the bare board | 29.2 × 17 × 4.3 pocket next to the C3 | **4.0 mm** to the sides |
 | Capacitive soil V1.2 | **98 × 23 × 1.6** PCB, JST-PH 2.0 socket 5.6 mm tall, 20 cm cable | [makerselectronics](https://makerselectronics.com/product/capacitive-soil-moisture-sensor-v1-2) ("98 x 23mm", JST PH2.0, 20 cm cable); [tinkered.ai](https://www.tinkered.ai/components/capacitive-soil-moisture-v12) (SEN0193 clone, 3.3–5.5 V, 5 mA) | 25 × 8.9 × 106 cavity | **2.0 mm** across, **1.5 mm** behind the socket for the cable |
 | 103450 LiPo | 10 × 34 × 50 nominal, **10.5 × 35 × 52** as built | cell naming convention + protection PCB/sleeve/leads | 27 × 10.5 × 53 pocket | **0.5 mm** at each end — the tightest fit in the case |
@@ -32,11 +32,32 @@ actually measures 17.3 × 29 × 4.3. Version 1.0.1 of this case was checked agai
 the real outline. If you buy a *micro*-USB TP4056 instead, it is ~2 mm shorter and
 still fits.
 
-**The probe does not get soldered.** The V1.2 arrives with its 20 cm three-wire
-cable already crimped into a JST-PH socket. Thread that cable up the 1.5 mm
-channel behind the socket, out the wire pocket and over the rim; cut the Dupont
-ends and solder *those* to the C3. The probe end stays a factory crimp, which is
-much more likely to survive five years in wet soil than a hand-soldered header.
+**The probe's connector is 6.6 mm or nothing.** The cavity leaves 6.6 mm above the
+PCB before the cap's inner face. A JST-PH 2.0 socket is 5.6 mm and fits, with
+1.5 mm behind it for its cable to climb into the wire pocket — on boards that
+ship that way, the probe end is a factory crimp and nothing is soldered at the
+probe. A **straight 2.54 mm header stands ~8.5 mm and the cap will not close**, so
+those boards need the header desoldered (wires straight to the pads) or replaced
+with a right-angle one. This is the difference between a 30-second fit and a
+build that stops at the last step.
+
+## Do these match the Amazon listings?
+
+The models above are for the *part family*. Whether they match the exact ASIN in
+the BOM is a separate question, so here is what each listing actually says, checked
+on 2026-11-20:
+
+| BOM item | Listing status | What the listing says | Verdict |
+|---|---|---|---|
+| Sensor — Gikfun EK1940, `B07H3P1NRM` | live, 2-pack | Item dimensions **0.91 × 0.01 × 3.86 in = 23 × 98 mm** | **Matches.** The 0.01 in thickness field is junk (the PCB is 1.6 mm); length and width are the case's numbers to a tenth of a mm. No cable is mentioned in the title — check the connector on the board you receive. |
+| C3 — Teyleten Robot, `B0D47G24W3` | live, 3-pack | No dimensions, no pinout, no headers listed | **Unverified from the listing.** The model is the SuperMini standard (22.52 × 18). Since the bay is an open cavity and not a printed channel, a board 1 mm longer or 2 mm wider still fits — but confirm **GPIO3** is broken out, because the firmware wakes on it. |
+| Charger — `B07PKND8K9` | **404, dead** | — | **Could not verify, and the link was broken.** BOM now points at a search with the constraints written down: Type-C, DW01 + MOSFET protection, ≤ 17.5 × 29 × 4.5 mm overall. |
+| Cell | search link, no fixed ASIN | — | No listing to match. This is why the cell is the one part to measure with calipers. |
+| Pigtail | search link, no fixed ASIN | — | Same. The constraint is ≤ 13 mm of body behind the panel. |
+
+So: the probe's model matches its listing's own stated size; the C3's model is
+standard-family, not listing-verified; the charger's link is dead and now a search.
+Those three answers are different, and they are the honest ones.
 
 ## 3D models of the parts
 
@@ -77,5 +98,10 @@ tolerance — check the listing before ordering.
 - Clone variance is real: C3 SuperMini boards range 22.0–22.8 mm long, and
   "103450" cells range 50–53 mm. The clearances above are what the case gives at
   the published size.
+- **The probe connector is the one real interference risk.** The sleeve leaves
+  6.6 mm above the PCB. JST-PH sockets fit; a straight 2.54 mm header (~8.5 mm)
+  does not, and neither does a board with a soldered Dupont wire bundle standing
+  up. `check_fit.py` prints the 6.6 mm envelope as a NOTE rather than a PASS,
+  because it depends on what your board shipped with.
 - Nothing here has been printed or assembled yet. The fit is arithmetic plus
   meshes, not a build log — the first physical build is still the real test.

@@ -165,6 +165,10 @@ def main():
     report(ss.CAV_Y_BACK - boxes["sensor-connector"][1][1] >= 1.2,
            f"cable channel behind the JST socket "
            f"{ss.CAV_Y_BACK - boxes['sensor-connector'][1][1]:.1f} mm")
+    envelope = ss.CAV_Y_BACK - pc[1][1] - 0.5
+    print(f"  [NOTE] connector envelope above the PCB: {envelope:.1f} mm - a "
+          f"JST-PH socket (5.6 mm) fits; a straight 2.54 mm header (~8.5 mm) "
+          f"does not, so desolder it or fit a right-angle one")
 
     # -- 5. wire route is open -------------------------------------------
     print("\nwire route (sampled through the body mesh)")

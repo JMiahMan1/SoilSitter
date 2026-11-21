@@ -74,12 +74,14 @@ after the test fit. The bundle must stay under 5 mm across.
    towards the charge-port cut-out and the antenna facing away from the battery.
 3. **Battery divider.** 1 MΩ from the cell node to `GPIO1`, 1 MΩ from `GPIO1` to
    GND, 100 nF across the lower resistor, right at the pin.
-4. **Probe cable.** Don't solder at the probe: it ships with a 20 cm three-wire
-   cable crimped into its JST-PH socket. Snip the Dupont ends off, and solder
-   *those* three wires to the C3 (`GPIO5` red VCC, `GND` black, `GPIO0` yellow
-   AOUT). If your batch came with a loose 2.54 mm header instead of a socket,
-   plug the cable onto it and leave the header unpinned — you are still not
-   soldering to the board.
+4. **Probe connection — 6.6 mm is the limit.** Whatever connector is on the board
+   has to be under 6.6 mm tall, or the cap will not close. A JST-PH 2.0 socket
+   (5.6 mm) is ideal: snip the Dupont ends off its cable and solder those three
+   wires to the C3 (`GPIO5` red VCC, `GND` black, `GPIO0` yellow AOUT). If the
+   board arrived with a straight 2.54 mm header (~8.5 mm), desolder it and solder
+   the wires straight to the pads, or fit a right-angle header — 2.5 mm up, cable
+   leaves sideways. Check with calipers before you seat the board: this is the one
+   interference that only shows up at the very end of the build.
 5. **Feed the probe wires** down through the bay notch, along the leg groove and
    into the probe cavity from above, then seat the probe.
 6. **Optional button.** A 6 mm tact switch between `GPIO3` and `GND`, glued into

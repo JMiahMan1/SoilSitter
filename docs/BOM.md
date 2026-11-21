@@ -13,9 +13,9 @@ own wire, resistors and screws.
 
 | # | Part | Spec the case depends on | Qty | ~Price | Link |
 |---|---|---|---|---|---|
-| 1 | **ESP32-C3 SuperMini** | 22.52 × 18 mm board, 2.54 mm pitch, USB-C 3.2 mm tall, buttons on the long edges | 3 | $16 | [Teyleten Robot 3-pack](https://www.amazon.com/dp/B0D47G24W3) |
-| 2 | **Capacitive Soil Moisture Sensor V1.2** | 98 × 23 × 1.6 mm PCB, 3-pin connector at the cable end (JST-PH 2.0 on most batches), sensing face on the back, 20 cm cable included | 2 | $9 | [Gikfun 2-pack](https://www.amazon.com/dp/B07H3P1NRM) |
-| 3 | **TP4056 Type-C charge module** | 26 × 17 mm board, **29 mm overall** once the Type-C shell is counted | 10 | $9 | [10-pack, Type-C + protection](https://www.amazon.com/dp/B07PKND8K9) |
+| 1 | **ESP32-C3 SuperMini** | 22.52 × 18 mm board, 2.54 mm pitch, USB-C, buttons on the long edges — check **GPIO3** is on the header | 3 | $16 | [Teyleten Robot 3-pack](https://www.amazon.com/dp/B0D47G24W3) |
+| 2 | **Capacitive Soil Moisture Sensor V1.2** | 98 × 23 × 1.6 mm PCB (listing states 23 × 98), sensing face on the back, connector at the cable end — **must be ≤ 6.6 mm tall** (JST-PH socket yes, straight 2.54 mm header no) | 2 | $9 | [Gikfun 2-pack](https://www.amazon.com/dp/B07H3P1NRM) |
+| 3 | **TP4056 Type-C charge module** | **Type-C**, DW01 + dual-MOSFET protection, **≤ 17.5 × 29 × 4.5 mm overall** (the shell counts, not just the 26 × 17 board) | 5 | $8 | [search: TP4056 Type-C with protection](https://www.amazon.com/s?k=tp4056+type-c+with+protection+module) |
 | 4 | **103450 LiPo, 3.7 V 2000 mAh** | 10 × 34 × 50 mm nominal, 10.5 × 35 × 52 mm as built (protection PCB + sleeve + leads) | 2 | $18 | [search: 103450 2000 mAh JST](https://www.amazon.com/s?k=103450+3.7v+2000mah+lipo+battery+jst) |
 | 5 | **M16 USB-C panel-mount pigtail** | 16 mm thread, 20 mm hex nut, ≤ 13 mm of body behind the panel — a 90° plug is easiest | 2 | $10 | [search: M16 USB-C panel mount](https://www.amazon.com/s?k=M16+USB-C+panel+mount+extension+cable) |
 
@@ -31,15 +31,21 @@ Notes on each:
    [USAGE.md](USAGE.md#the-power-led) for removing it (roughly doubles
    run time) or leave it and accept ~3 months.
 2. **Sensor V1.2, not V1.0, not "V2.0", not resistive.** V1.2 is the 555-timer
-   board with a 3–5 year electrode life and a 0.3–3.0 V output. The case is cut
-   for the 98 × 23 mm V1.2; the longer "V2.0" boards will not fit. It ships with
-   a 20 cm cable already crimped to the board (JST-PH 2.0 on most batches, a
-   2.54 mm header on some), so **nothing is soldered at the probe** — cut the
-   Dupont ends off and solder those to the C3. The case leaves a 1.5 mm channel
-   behind the socket for that cable to climb into the wire pocket.
-3. **TP4056 with protection.** The bare TP4056 boards without the DW01 + dual
-   MOSFET will over-discharge a pouch cell. The 10-pack is cheaper than a
-   protected 2-pack and gives you spares for other projects.
+   board with a 3–5 year electrode life and a 0.3–3.0 V output. The Gikfun 2-pack
+   (EK1940) is this board: its listing gives 0.91 × 0.01 × 3.86 in, i.e. **23 × 98
+   mm** — the size the case is cut for. The longer "V2.0" boards will not fit.
+   **Check the connector before you wire it.** The sleeve leaves 6.6 mm above the
+   PCB: a JST-PH 2.0 socket (5.6 mm) fits and its supplied cable climbs the 1.5 mm
+   channel behind it, so nothing is soldered at the probe. A **straight 2.54 mm
+   header is ~8.5 mm and will not close under the cap** — desolder it and solder
+   wires to the pads, or fit a right-angle header.
+3. **TP4056 with protection, and Type-C.** The bare TP4056 boards without the
+   DW01 + dual MOSFET will over-discharge a pouch cell. It also has to be the
+   **Type-C** version: the panel pigtail is USB-C, and a micro-USB board will not
+   accept it. This used to link a specific 10-pack (ASIN B07PKND8K9); that page
+   returned 404 in November 2026, so it is a search link now. Measure the module
+   across its longest axis before you commit: 26 × 17 mm is the PCB, 29 mm is the
+   part, and the case is cut for 29.2 mm.
 4. **Battery.** 103450 = 10 × 34 × 50 mm, 2000 mAh nominal. Check the listing's
    dimensions rather than the model number: with its protection PCB and sleeve a
    cell usually measures 10.5 × 35 × 52 mm. That is what the bay is sized for —
@@ -62,7 +68,7 @@ Notes on each:
 | 7 | 1 MΩ resistors, 1/4 W (battery divider) | 2 | $6 / kit | [search: 1M ohm resistor kit](https://www.amazon.com/s?k=1m+ohm+resistor+1%2F4w+assortment) |
 | 8 | 100 nF + 10 µF capacitors (ADC filter, rail) | 4 | $7 / kit | [search: capacitor assortment](https://www.amazon.com/s?k=ceramic+capacitor+assortment+kit) |
 | 9 | 26 AWG silicone hookup wire, 4 colours | 1 kit | $12 | [search: 26 awg silicone wire kit](https://www.amazon.com/s?k=26+awg+silicone+wire+kit) |
-| 10 | JST-PH 2.0 pigtails (only if your probe ships without a cable) | 1 set | $7 | [search: JST-PH 2.0 cable](https://www.amazon.com/s?k=jst-ph+2.0+3+pin+cable) |
+| 10 | JST-PH 2.0 pigtails (only if your probe has bare pads or a 2.54 mm header) | 1 set | $7 | [search: JST-PH 2.0 cable](https://www.amazon.com/s?k=jst-ph+2.0+3+pin+cable) |
 
 The LDO is not optional: a 3.7 V cell cannot feed the C3's 5 V pin (its regulator
 needs ~4.5 V in) and putting 4.2 V straight on `3V3` is out of spec. The HT7333

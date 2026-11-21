@@ -1,6 +1,37 @@
 # Changelog
 
-## 1.0.2 — 2026-11-20
+## 1.0.3 — 2026-11-20
+
+**Checked the models against the actual Amazon listings.** 1.0.2 measured the parts;
+this checks whether those measurements describe the ASINs the BOM links. Answer:
+one matches, one is unverifiable, one link is dead, and one of my own claims was
+wrong.
+
+- **Sensor (Gikfun `B07H3P1NRM`) matches.** The listing gives 0.91 × 0.01 × 3.86 in
+  = **23 × 98 mm**, which is the case's number to a tenth of a millimetre. (The
+  0.01 in thickness field is junk; the PCB is 1.6 mm.)
+- **Charger (`B07PKND8K9`) is a dead link.** The page returns 404, so Type-C
+  versus micro-USB could not be confirmed at all — and the panel pigtail is
+  USB-C, so that distinction decides whether the unit can charge. The BOM now
+  links a search with the constraints written out: Type-C, DW01 + MOSFET,
+  ≤ 17.5 × 29 × 4.5 mm overall.
+- **C3 (Teyleten Robot `B0D47G24W3`) is listed without dimensions or pinout.**
+  The model is the SuperMini family standard (22.52 × 18). Because the bay is an
+  open cavity and not a printed channel, ±1 mm is harmless — but the listing
+  cannot confirm GPIO3 is broken out, and the firmware wakes on GPIO3, so that is
+  now a build check rather than an assumption.
+- **My "the probe needs no soldering" claim was wrong for this 2-pack.** The
+  Gikfun listing sells bare boards, and the real constraint is the 6.6 mm of
+  envelope above the PCB that the sleeve leaves before the cap's inner face. A
+  JST-PH socket (5.6 mm) fits; a **straight 2.54 mm header is ~8.5 mm and the cap
+  will not close** — those boards need the header off, or a right-angle one.
+  WIRING, BOM and FIT now say so, and `check_fit.py` prints the 6.6 mm envelope as
+  a NOTE (it depends on what shipped, so it cannot be a PASS/FAIL).
+
+New `docs/FIT.md` section, "Do these match the Amazon listings?", records all of
+the above with the listing status of each ASIN, so the next person does not have
+to re-derive which numbers are verified and which are family-standard.
+
 
 **Checked the case against the real parts instead of against my own guesses.**
 `check_fit.py` had been validating hardware boxes I had estimated from memory. I
