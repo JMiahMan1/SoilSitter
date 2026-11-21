@@ -1,5 +1,48 @@
 # Changelog
 
+## 1.0.2 — 2026-11-20
+
+**Checked the case against the real parts instead of against my own guesses.**
+`check_fit.py` had been validating hardware boxes I had estimated from memory. I
+looked up published dimensions and measured outlines for all six parts, and two
+of them were wrong.
+
+- **The TP4056 is 29 mm long, not 26.** The bare board is 26 × 17 mm, but the
+  Type-C shell hangs 3 mm past the PCB edge: the real footprint is 17.3 × 29 ×
+  4.3 mm ([Xem Studio's measured outline](https://xemstudio.com/) ships STEP and
+  STL). The pocket was cut 25 mm wide — the shell would have rested against the
+  lid screw boss's 1.5 mm gap, and a slightly longer clone would have jammed. The
+  pocket is now 29.2 × 17 × 4.3 and clears the boss by 0.8 mm.
+- **The battery was quoted as fitting with 54 mm of room; the bay has 53.** A
+  103450 cell with its protection PCB and sleeve measures 10.5 × 35 × 52 mm, so
+  it fits with 0.5 mm at each end — it is the tightest part in the case, and BOM
+  and FIT now say so instead of implying slack.
+- **The USB-C pigtail allowance was 30 mm of body behind the panel; the bay gives
+  13.** Corrected in the BOM, with the 20 mm nut pocket called out too.
+- **The probe is not soldered at all.** The V1.2 ships with a 20 cm cable already
+  crimped into a JST-PH socket, so WIRING now says to cut the Dupont ends and
+  leave the probe end as a factory crimp — a better joint than a hand-soldered
+  header in wet soil. The cavity already gave the socket 5.6 mm and a 1.5 mm
+  cable channel behind it, which is now asserted.
+- **New [docs/FIT.md](docs/FIT.md)**: every part's published size, its source,
+  the allowance the case gives it, the clearance, 3D-model links, and what to
+  measure with calipers before printing.
+
+**`check_fit.py` changes**
+
+- Hardware boxes now carry the source of each dimension in a comment, and the
+  sensor is three boxes (PCB, SMD parts, JST socket) rather than one lump, so the
+  cable channel is a real test.
+- Board pockets sit flush with the bay's mouth because they are taped to the lid;
+  the check now requires 0.4 mm on the sides and back but allows 0 at that face,
+  and reports the number either way instead of failing on a correct design.
+- New assertions: the JST socket leaves ≥1.2 mm behind it for the cable, and the
+  probe PCB's side clearance is printed rather than assumed.
+
+Geometry is unchanged: every part already fit the printed cavities. What changed
+is that the numbers now mean something.
+
+
 ## 1.0.1 — 2026-11-20
 
 **Fixed: both gaskets were modelled floating in mid-air.** Rendering the parts

@@ -131,6 +131,7 @@ probe boards or thicker rims.
 - **[docs/BOM.md](docs/BOM.md)** — everything to buy, with Amazon links
 - **[docs/WIRING.md](docs/WIRING.md)** — pin map, soldering, wire lengths
 - **[docs/ASSEMBLY.md](docs/ASSEMBLY.md)** — print settings and step-by-step build
+- **[docs/FIT.md](docs/FIT.md)** — measured sizes of every part, and the clearance the case gives it
 - **[docs/CALIBRATION.md](docs/CALIBRATION.md)** — dry/wet calibration and the battery curve
 - **[docs/USAGE.md](docs/USAGE.md)** — placement, charging, battery-life maths, quirks
 - **[docs/INTEGRATION.md](docs/INTEGRATION.md)** — Home Hub adoption and the Garden binding

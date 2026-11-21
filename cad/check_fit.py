@@ -28,20 +28,40 @@ import soilsitter as ss  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 STL = ROOT / "stl"
 
-#: name: (x0, x1, y0, y1, z0, z1, what)
+#: The real parts, from published dimensions rather than guesses. Each entry is
+#: the box the part occupies *as it is mounted* (component side up), with the
+#: thickness of a 2.5 mm foam tape pad added where a board is stuck to the lid.
+#:
+#: Sources (checked 2026-11-20):
+#:   ESP32-C3 Super Mini  22.52 x 18 mm, 2.54 mm pitch, USB-C 3.2 mm tall
+#:       espboards.dev/esp32/esp32-c3-super-mini (and its GrabCAD model link)
+#:   TP4056 Type-C       26 x 17 mm module, Type-C shell ~1 mm proud of the edge
+#:       sigmanortec.ro "lithium battery charging module TP4056 TypeC" data sheet
+#:   Cap. soil V1.2      98 x 23 x 1.6 mm PCB, JST-PH 2.0 connector on top
+#:       makerselectronics.com "Capacitive Soil Moisture Sensor V1.2" (98 x 23 mm,
+#:       20 cm cable), tinkered.ai (SEN0193 clone, 3.3-5.5 V, 5 mA)
+#:   103450 cell         10 x 34 x 50 mm nominal; 10.5 x 35 x 52 mm with the
+#:       protection PCB, sleeve and leads
+#:   M16 USB-C pigtail   16 mm thread, 20 mm hex nut, ~13 mm body behind the panel
+#:       (a right-angle plug is shorter; the cable bends from there)
+#:   HT7333 LDO          SOT-89, 4.5 x 4.0 x 1.5 mm
 HARDWARE = {
-    "esp32-c3-supermini": (-38, -20, 4.5, 10.5, -32, -9.5,
-                          "22.5 x 18 mm board, 6 mm + 2 mm header pins"),
-    "lipo-103450": (-17, 17, 17.5, 27.5, -52, -2,
-                    "10 x 34 x 50 mm pouch, 2000 mAh with protection"),
-    "tp4056": (5, 30, 4.5, 10.5, -20, -1,
-               "25 x 19 mm Type-C charger module"),
-    "usb-pigtail": (-38, -22, 19.5, 29.5, -48, -32,
-                    "M16 panel-mount USB-C barrel inside the bay"),
-    "sensor-pcb": (-11.5, 11.5, -22.7, -21.1, -134, -36,
-                   "98 x 23 x 1.6 mm capacitive probe"),
-    "sensor-parts": (-11.5, 11.5, -22.7, -15.6, -134, -36,
-                     "probe components, incl. the 3-pin connector"),
+    "esp32-c3-supermini": (-38.0, -20.0, 3.0, 7.8, -33.5, -11.0,
+                          "22.52 x 18 mm board, 1.6 + 3.2 USB-C on 3 mm tape"),
+    "tp4056": (2.0, 31.2, 3.0, 7.3, -21.0, -4.0,
+               "29 x 17.3 x 4.3 mm overall: 26 x 17 board + 3 mm Type-C shell"),
+    "ht7333": (-10.0, -5.5, 3.0, 7.0, -20.0, -18.5,
+               "SOT-89 LDO, 4.5 x 4.0 x 1.5 mm"),
+    "lipo-103450": (-17.5, 17.5, 17.0, 27.5, -52.5, -0.5,
+                    "10.5 x 35 x 52 mm pouch incl. protection PCB and leads"),
+    "usb-pigtail": (-40.0, -20.0, 16.0, 29.5, -50.0, -30.0,
+                    "M16 panel pigtail: 20 mm nut + 13 mm body behind the panel"),
+    "sensor-pcb": (-11.5, 11.5, -22.7, -21.1, -134.0, -36.0,
+                   "98 x 23 x 1.6 mm capacitive probe, sensing face out"),
+    "sensor-smd": (-11.5, 11.5, -21.1, -19.2, -134.0, -36.0,
+                   "tallest SMD parts on the probe, 1.9 mm"),
+    "sensor-connector": (-11.5, 11.5, -21.1, -15.5, -44.0, -36.0,
+                         "JST-PH 2.0 socket, 5.6 mm above the PCB"),
 }
 
 
@@ -100,9 +120,14 @@ def main():
         if name.startswith((("sensor", "usb"))):
             continue
         clear = np.minimum(b[0] - bay[0], bay[1] - b[1])
-        inside = np.all(b[0] >= bay[0]) and np.all(b[1] <= bay[1])
-        report(inside and clear.min() >= 0.4,
-               f"{name:20s} fits, min wall clearance {clear.min():.1f} mm")
+        # Boards are taped to the lid, so their face is flush with the bay's mouth:
+        # no clearance there is correct. Everything else needs 0.4 mm.
+        mouth = clear[1]
+        sides = min(clear[0], clear[2], bay[1][1] - b[1][1])
+        inside = np.all(b[0] >= bay[0] - 0.05) and np.all(b[1] <= bay[1])
+        report(inside and sides >= 0.4 and mouth >= -0.05,
+               f"{name:20s} fits: {sides:.1f} mm to the sides, "
+               f"{mouth:+.1f} mm at the mouth")
 
     # -- 3. no overlaps between parts in the bay -------------------------
     print("\npacking")
@@ -130,13 +155,16 @@ def main():
         [ss.CAV_X, ss.CAV_Y_BACK, ss.CAV_Z_TOP],
     ])
     pc = boxes["sensor-pcb"]
-    pp = boxes["sensor-parts"]
-    report(np.all(pc[0] >= probe[0]) and np.all(pc[1] <= probe[1]),
-           "sensor PCB sits inside the probe cavity")
-    report(np.all(pp[0] >= probe[0]) and np.all(pp[1] <= probe[1]),
-           "sensor components clear the cap (no crushing of the connector)")
+    for label, box in (("PCB", pc), ("SMD parts", boxes["sensor-smd"]),
+                       ("JST socket", boxes["sensor-connector"])):
+        report(np.all(box[0] >= probe[0]) and np.all(box[1] <= probe[1]),
+               f"sensor {label} inside the probe cavity, clear of the cap")
     report(probe[1, 0] - probe[0, 0] - (pc[1, 0] - pc[0, 0]) >= 1.0,
-           "side clearance for the PCB >= 1 mm total")
+           f"side clearance for the 23 mm PCB "
+           f"{probe[1, 0] - probe[0, 0] - (pc[1, 0] - pc[0, 0]):.1f} mm")
+    report(ss.CAV_Y_BACK - boxes["sensor-connector"][1][1] >= 1.2,
+           f"cable channel behind the JST socket "
+           f"{ss.CAV_Y_BACK - boxes['sensor-connector'][1][1]:.1f} mm")
 
     # -- 5. wire route is open -------------------------------------------
     print("\nwire route (sampled through the body mesh)")

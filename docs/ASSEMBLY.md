@@ -76,14 +76,19 @@ minutes will hold it for another cycle.
    pressure and stop against the collar at Z ≈ −30 mm. If it binds, the cavity
    floor has a blob — file it, do not force the board, the electrode is a thin
    copper pour and it will crease.
-4. **Seat the C3 in the bay.** USB-C end towards the charge-port hole, antenna
-   away from the battery. Two dabs of hot glue on the board's edge, not under it.
+4. **Seat the C3 in the bay.** It goes on the lid, not the body: three 3 mm foam
+   tape pads under its two long edges (clear of the USB-C shell), then press it
+   onto the lid's inner face with the antenna away from the battery. Taped to the
+   lid means the whole stack lifts out when you open the case. The 3 mm tape
+   thickness is what the fit check assumes, so keep it under 3.5 mm.
 5. **Battery.** Foam tape on the back of the pouch, then press it into the bay
    floor with the leads towards the charge board. The cell must not sit on the
    TP4056 — that board gets warm while charging.
-6. **Charge board and LDO.** Double-sided tape or a drop of hot glue, USB-C socket
-   aligned with the panel pigtail. Plug the pigtail into it *before* you glue:
-   the connector is easier to seat with the board loose.
+6. **Charge board and LDO.** Same 3 mm foam tape, on the lid to the right of the
+   C3 — **not** at the bottom-left corner, which is a lid screw boss. The pigtail's
+   lead crosses the bay to reach the charger's USB-C; plug it in *before* you tape
+   the board down (the connector is easier to seat with the board loose) and dress
+   the lead flat against the lid so the lid still closes.
 7. **Dress the wiring.** The probe bundle goes up the leg groove and into the bay
    through the notch at the top; leave 30 mm of slack inside the bay so the lid
    closes without trapping a wire.

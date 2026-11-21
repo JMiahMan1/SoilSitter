@@ -74,9 +74,12 @@ after the test fit. The bundle must stay under 5 mm across.
    towards the charge-port cut-out and the antenna facing away from the battery.
 3. **Battery divider.** 1 MΩ from the cell node to `GPIO1`, 1 MΩ from `GPIO1` to
    GND, 100 nF across the lower resistor, right at the pin.
-4. **Probe pigtail.** Solder the three wires to the probe header with the wire
-   exiting *towards the pot wall*, so it turns into the groove without a kink.
-   Heat-shrink each joint individually, then the bundle.
+4. **Probe cable.** Don't solder at the probe: it ships with a 20 cm three-wire
+   cable crimped into its JST-PH socket. Snip the Dupont ends off, and solder
+   *those* three wires to the C3 (`GPIO5` red VCC, `GND` black, `GPIO0` yellow
+   AOUT). If your batch came with a loose 2.54 mm header instead of a socket,
+   plug the cable onto it and leave the header unpinned — you are still not
+   soldering to the board.
 5. **Feed the probe wires** down through the bay notch, along the leg groove and
    into the probe cavity from above, then seat the probe.
 6. **Optional button.** A 6 mm tact switch between `GPIO3` and `GND`, glued into
@@ -91,8 +94,8 @@ With the battery **disconnected**:
   solder bridge under the C3.
 - `GPIO5` to `GND` reads the probe's resistance (hundreds of kΩ to MΩ).
 - `GPIO1` to `GND` reads 1 MΩ, and `GPIO1` to the cell node reads 1 MΩ.
-- No continuity between `GPIO0` and `GPIO5` — if there is, the probe header is
-  bridged and the ADC will read the rail.
+- No continuity between `GPIO0` and `GPIO5` — if there is, the probe connector
+  or cable is bridged and the ADC will read the rail.
 
 ## Common wiring mistakes
 
